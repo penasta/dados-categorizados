@@ -1,0 +1,118 @@
+---
+title: ''
+author: ''
+date: ''
+output:
+  pdf_document: null
+  fig_crop: no
+  html_document:
+    df_print: paged
+subtitle: ''
+highlight: tango
+number_sections: no
+fig_caption: yes
+keep_tex: yes
+includes:
+  in_header: Estilo.sty
+classoption: a4paper
+always_allow_html: yes
+editor_options: 
+  chunk_output_type: console
+---
+
+\begin{center}
+{\Large
+  DEPARTAMENTO DE ESTATÍSTICA} \\[0.5cm]
+\begin{figure}[!t]
+\centering
+\includegraphics[width=9cm, keepaspectratio]{logo-UnB.eps}
+\end{figure}
+{\large
+  `r format(Sys.time(), '%d %B %Y')`} \\[0.5cm]
+{\LARGE
+  \textbf{Trabalho de Dados Categorizados}} \\[0.5cm]
+{\Large
+  Prof. Maria Tereza Leão Costa} \\[0.5cm]
+{\Large
+  \textbf{Estudantes}} \\[0.2cm]
+{\Large
+  Bruno Gondim Toledo (15/0167636) \\
+          Rafael de Acypreste (20/0060023)} \\[0.5cm]          
+{\Large
+  Análise de Dados Categorizados} \\[0.5cm]
+{\Large
+  1º/2024} \\[0.5cm]
+\end{center}
+\newpage
+
+```{r setup, include=F}
+knitr::opts_chunk$set(
+  echo = FALSE,
+  warning = FALSE,
+  message = FALSE,
+  fig.width = 6,
+  fig.height = 4
+)
+
+source("trabalho/trabalho.R")
+```
+
+```{r}
+pacman::p_load(
+ gtsummary,
+  labelled
+)
+
+
+```
+
+
+# Introdução
+
+Ao se constatar que um paciente desenvolveu câncer, é fundamental, para se decidir qual tratamento utilizar, saber se o câncer já se espalhou para os linfonodos próximos. Um estudo foi realizado com o objetivo de medir a capacidade de predição para o envolvimento nodal em câncer de próstata de várias variáveis pré-operatórias cuja coleta é menos invasiva que uma cirurgia.
+
+• Numa primeira etapa, desejava-se avaliar especificamente o efeito do nível de
+fosfatase ácida na predição para envolvimento nodal; e
+
+• Na segunda etapa do estudo se considerou além desta variável as outras variáveis
+pré-operatórias. 
+
+Com isso, o presente estudo objetiva analisar os dados coletados e verificar a capacidade de predição para o envolvimento nodal em câncer de próstata.
+
+
+
+## Análise exploratória
+
+Os dados avaliados consistem no acompanhamento clínico de 146 pacientes com câncer de próstata. Um resumo das variáveis pode ser visto na \ref{tab:dados}.
+
+
+```{r dados}
+#| label: dados
+#| tbl-cap: Resumo dos dados.
+
+var_label(dados) <- list(
+  resultado_radiografia = "Resultado da Radiografia",
+  estagio_tumor         = "Estágio do Tumor",
+  nivel_fosfatase_acida = "Nível da Fosfatase Ácida",
+  envolvimento_nodal    = "Envolvimento Nodal"
+)
+
+
+dados |> 
+  tbl_summary() |> 
+   modify_caption("**Patient Characteristics.**") 
+```
+
+
+
+
+# Metodologia
+
+
+# Resultados
+
+
+
+# Conclusão
+
+
