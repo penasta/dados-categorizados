@@ -197,8 +197,8 @@ proc logistic data=trabalho.df;
 run;
 
 /* O método Stepwise sugere pelo modelo contendo todas as variáveis, além de interação entre X1 e X3 */
-/* Esta interação não é muito siginificativa, e o modelo sem interação contendo todas as três funcionou muito bem como visto anteriormente */
-/* Portando, ficaremos com o modelo mais parsimonioso, isto é: X4 ~ X1 X2 X3 */
+/* Esta interação não é muito significativa, e o modelo sem interação contendo todas as três funcionou muito bem como visto anteriormente */
+/* Portando, ficaremos com o modelo mais parcimonioso, isto é: X4 ~ X1 X2 X3 */
 
 proc logistic data=trabalho.df outest=betas covout;
    	model X4 (event='Sim')= X1 X2 X3 /covb lackfit;
