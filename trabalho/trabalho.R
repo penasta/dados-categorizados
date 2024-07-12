@@ -2,7 +2,7 @@
 if (!require("pacman")) install.packages("pacman")
 pacman::p_load(readxl,tidyverse,cowplot,mdscore,AICcmodavg,questionr,mlpack,
                ResourceSelection,lmtest,car,stats,knitr,pROC,ROCit,
-               compareGroups)
+               compareGroups,performance)
 
 # Dados de análise e treino dos modelos ----
 df <- read_excel("arquivos/Amostra_g06_Bruno_Rafael.xlsx")
@@ -10,7 +10,7 @@ colnames(df) <- c("ID", # Identificação do paciente
                   "resultado_radiografia", # 0 = negativo | 1 - positivo
                   "estagio_tumor", # 0 - menos grave | 1 - mais grave
                   "nivel_fosfatase_acida", # x100
-                  "envolvimento_nodal" # 0 - sim | 1 - não
+                  "envolvimento_nodal" # 0 - não | 1 - sim
                   )
 
 # Dados de validação do modelo (teste) ----
@@ -19,7 +19,7 @@ colnames(teste) <- c("ID", # Identificação do paciente
                      "resultado_radiografia", # 0 = negativo | 1 - positivo
                      "estagio_tumor", # 0 - menos grave | 1 - mais grave
                      "nivel_fosfatase_acida", # x100
-                     "envolvimento_nodal" # 0 - sim | 1 - não
+                     "envolvimento_nodal" # 0 - não | 1 - sim
 )
 # ---------------------------------------------------------------------------- #
 # Parte 1) - Análise exploratória ----
@@ -32,8 +32,8 @@ dados = df %>%
     estagio_tumor == "0" ~ "- grave",
     estagio_tumor == "1" ~ "+ grave"
     ), envolvimento_nodal = case_when(
-      envolvimento_nodal == "0" ~ "Sim",
-      envolvimento_nodal == "1" ~ "Não"
+      envolvimento_nodal == "0" ~ "Não",
+      envolvimento_nodal == "1" ~ "Sim"
       ), nivel_fosfatase_acida = 100 * nivel_fosfatase_acida) 
 
 dados = dados[,2:5]
@@ -175,7 +175,7 @@ p + geom_point(na.rm = T) +
   geom_ribbon(data=new.data, aes(y=fit, ymin=yci, ymax=ycs),
               fill="lightblue", alpha=0.3) +
   geom_line(data=new.data, aes(y=fit)) + 
-  labs(x="Nível fosfatase ácida", y="Probabilidade") 
+  labs(x="Nível fosfatase ácida (x100)", y="Probabilidade de envolvimento nodal")
 
 # ---------------------------------------------------------------------------- #
 # Parte 3) Adicionando outras variáveis no modelo ----
@@ -319,12 +319,14 @@ kable(medidas2)
 kable(coef2)
 # Curva ROC do modelo fit2
 ROC <- roc(response = df$envolvimento_nodal, predictor = predict(fit2, type = "response"))
-plot(ROC, main = "Curva ROC - Modelo saturado")
+plot(ROC, main = "Curva ROC - Modelo completo")
 
 # Alternativo:
 ROC2 <- rocit(score=predict(fit2, type = "response"),class=df$envolvimento_nodal)
 plot(ROC2)
 ksplot(ROC2)
+
+performance_hosmer(fit2, n_bins = 10)
 
 # Aplicando o modelo aos dados de teste:
 teste$predict <- predict(fit2, teste, 
