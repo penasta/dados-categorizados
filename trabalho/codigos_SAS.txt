@@ -1,0 +1,246 @@
+OPTIONS LS=80 PS=60 NODATE;
+/* Importando dados da amostra */
+libname trabalho '/home/u36587463/dados';
+FILENAME REFFILE '/home/u36587463/dados/Amostra_g06_Bruno_Rafael.xlsx';
+
+PROC IMPORT DATAFILE=REFFILE
+	DBMS=XLSX
+	OUT=trabalho.df REPLACE;
+	GETNAMES=YES;
+RUN;
+
+/* Descodificando os dados e colocando a variável X3 na escala original */
+data trabalho.df;
+	set trabalho.df;
+	 X3 = X3*100; 
+	Label ID='Nº do prontuário'
+      X1='Resultado da radiografia'
+      X2='Estágio do tumor'
+	  X3='Nível de fosfatase ácida'
+      X4='Envolvimento nodal';
+run;
+
+/* Carregando os dados de validação do modelo */
+FILENAME valid '/home/u36587463/dados/Amostra_VALIDACAO.xlsx';
+PROC IMPORT DATAFILE=valid
+	DBMS=XLSX
+	OUT=trabalho.valid REPLACE;
+	GETNAMES=YES;
+RUN;
+
+data trabalho.valid;
+	set trabalho.valid;
+	 X3 = X3*100; 
+	Label ID='Nº do prontuário'
+      X1='Resultado da radiografia'
+      X2='Estágio do tumor'
+	  X3='Nível de fosfatase ácida'
+      X4='Envolvimento nodal';
+run;
+
+/* Conferindo dados */
+PROC CONTENTS 
+	DATA=trabalho.df;
+RUN;
+
+/* Criando rótulos para os valores das variáveis a que se referem */
+proc format;
+  value x1f 0='negativo'
+  		   1='positivo';
+  value x2f 0='menos grave'
+            1='mais grave';
+  value x4f 1='Sim'
+  			0='Não';              
+run;
+
+/* Análise exploratória */
+proc freq data=trabalho.df;
+	tables X3 X4;
+	format X4 x4f.;
+run;
+
+proc univariate data=trabalho.df plot;
+class X4;
+var X3;
+format X4 x4f.;
+run;
+
+proc means data=trabalho.df;
+   class X4;
+   var X3;
+   format X4 x4f.;
+run;
+
+proc gplot data=trabalho.df;
+	plot X4*X3;
+run;
+
+proc sgplot data=trabalho.df;
+vbox X3/category=X4;
+format X4 x4f.;
+run;
+
+proc tabulate data=trabalho.df;
+   class X4;
+   var X3;
+   table X4, X3*(mean std);
+   format X4 x4f.;
+run;
+
+/* Regressão binária logística: X3 (Nível de fosfatase ácida) explica X4 (Envolvimento nodal) */
+proc logistic data=trabalho.df;
+   	model X4 (event='1')= X3 /covb lackfit;
+run;
+
+/* Regressão binária logística: X1 (Resultado da radiografia),
+								X2 (Estágio do tumor),
+								X3 (Nível de fosfatase ácida) 
+								EXPLICAM
+								X4 (Envolvimento nodal) */
+								
+proc logistic data=trabalho.df;
+   	model X4 (event='Sim')= X1 X2 X3 /covb lackfit;
+   	format X1 x1f. X2 x2f. X4 x4f.;
+run;
+
+/* Outros modelos possíveis */
+
+proc logistic data=trabalho.df;
+   	model X4 (event='Sim')= X1 /covb;
+   	format X1 x1f. X4 x4f.;
+run;
+
+proc logistic data=trabalho.df;
+   	model X4 (event='Sim')= X2 /covb;
+   	format X2 x2f. X4 x4f.;
+run;
+
+proc logistic data=trabalho.df;
+   	model X4 (event='Sim')= X1 X3 /covb lackfit;
+   	format X1 x1f. X4 x4f.;
+run;
+
+proc logistic data=trabalho.df;
+   	model X4 (event='Sim')= X2 X3 /covb lackfit;
+   	format X2 x2f. X4 x4f.;
+run;
+
+proc logistic data=trabalho.df;
+   	model X4 (event='Sim')= X1 X2 /covb lackfit;
+   	format X1 x1f. X2 x2f. X4 x4f.;
+run;
+
+/* Olhando interações */
+proc logistic data=trabalho.df;
+   	model X4 (event='Sim')= X1 X2 X3 X1*X2 X2*X3 X1*X3 X1*X2*X3 /covb lackfit;
+   	format X1 x1f. X2 x2f. X4 x4f.;
+run;
+
+proc logistic data=trabalho.df;
+   	model X4 (event='Sim')= X1 X2 X3 X1*X2 X2*X3 X1*X3 /covb lackfit;
+   	format X1 x1f. X2 x2f. X4 x4f.;
+run;
+
+proc logistic data=trabalho.df;
+   	model X4 (event='Sim')= X1 X2 X3 X1*X2 X2*X3 /covb lackfit;
+   	format X1 x1f. X2 x2f. X4 x4f.;
+run;
+
+proc logistic data=trabalho.df;
+   	model X4 (event='Sim')= X1 X2 X3 X1*X2 X1*X3/covb lackfit;
+   	format X1 x1f. X2 x2f. X4 x4f.;
+run;
+
+proc logistic data=trabalho.df;
+   	model X4 (event='Sim')= X1 X2 X3 X2*X3 X1*X3/covb lackfit;
+   	format X1 x1f. X2 x2f. X4 x4f.;
+run;
+
+proc logistic data=trabalho.df;
+   	model X4 (event='Sim')= X1 X2 X3 X1*X2 X2*X3 X1*X3/covb lackfit;
+   	format X1 x1f. X2 x2f. X4 x4f.;
+run;
+
+/* As interações nunca aparecem significativas quando a variável está presente no modelo. Portanto, não utilizaremos. */
+/* De todos os modelos testados, os que melhor se ajustam aparentam ser: */
+
+/* Regressão binária logística: X1 (Resultado da radiografia),
+								X2 (Estágio do tumor),
+								X3 (Nível de fosfatase ácida) 
+								EXPLICAM
+								X4 (Envolvimento nodal) */
+								
+proc logistic data=trabalho.df;
+   	model X4 (event='Sim')= X1 X2 X3 /covb lackfit;
+   	format X1 x1f. X2 x2f. X4 x4f.;
+run;
+
+/* Regressão binária logística: X1 (Resultado da radiografia),
+								X2 (Estágio do tumor),
+								EXPLICAM
+								X4 (Envolvimento nodal) */
+								
+proc logistic data=trabalho.df;
+   	model X4 (event='Sim')= X1 X2 /covb lackfit;
+   	format X1 x1f. X2 x2f. X4 x4f.;
+run;
+
+/* Utilizando abordagem Stepwise para escolha de modelo */
+proc logistic data=trabalho.df;
+   model X4 (event='Sim')= X1 X2 X3 X1*X2 X2*X3 X1*X3 X1*X2*X3
+                / selection=stepwise
+                  slentry=0.3
+                  slstay=0.35
+                  details
+                  lackfit;
+   format X1 x1f. X2 x2f. X4 x4f.;
+run;
+
+/* O método Stepwise sugere pelo modelo contendo todas as variáveis, além de interação entre X1 e X3 */
+/* Esta interação não é muito siginificativa, e o modelo sem interação contendo todas as três funcionou muito bem como visto anteriormente */
+/* Portando, ficaremos com o modelo mais parsimonioso, isto é: X4 ~ X1 X2 X3 */
+
+proc logistic data=trabalho.df outest=betas covout;
+   	model X4 (event='Sim')= X1 X2 X3 /covb lackfit;
+   output out=pred p=phat lower=lcl upper=ucl
+          predprob=(individual crossvalidate);
+   ods output Association=Association;
+      	format X1 x1f. X2 x2f. X4 x4f.;
+run;
+
+/* Parâmetros do modelo */
+proc print data=betas;
+run;
+
+/* Previsões do modelo sob os dados, com intervalo de confiança 95% */
+proc print data=pred;
+run;
+
+/* Curva ROC do modelo */
+proc logistic data=trabalho.df plots(only)=roc;
+model X4 (event='Sim')= X1 X2 X3;
+ods output roccurve=ROCdata;
+format X1 x1f. X2 x2f. X4 x4f.;
+run;
+
+/* Testando o modelo nos dados de validação */
+/* Salvando o modelo */
+proc logistic data=trabalho.df outmodel=fit;
+    model X4 (event='Sim')= X1 X2 X3 /covb lackfit;
+    format X1 x1f. X2 x2f. X4 x4f.;
+run;
+
+/* Aplicando modelo sob dados de validação */
+proc logistic inmodel=fit;
+    score data=trabalho.valid out=validacao_resultado;
+run;
+
+/* Verificando resultado */
+proc print data=validacao_resultado;
+run;
+
+/* "Matriz de confusão" */
+proc freq data=validacao_resultado;
+   tables X4*I_X4 / nopercent norow nocol ;
+   format X4 x4f.;
+run;
