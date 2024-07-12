@@ -34,7 +34,7 @@ dados = df %>%
     ), envolvimento_nodal = case_when(
       envolvimento_nodal == "0" ~ "Não",
       envolvimento_nodal == "1" ~ "Sim"
-      ), nivel_fosfatase_acida = 100 * nivel_fosfatase_acida) 
+      ), nivel_fosfatase_acida = nivel_fosfatase_acida) 
 
 dados = dados[,2:5]
 dados$envolvimento_nodal = factor(dados$envolvimento_nodal)
@@ -58,7 +58,7 @@ descrTable(dados)
 plot(tabela)
 plot(tabela, bivar=TRUE)
 
-rm(dados,tabela)
+# rm(dados,tabela)
 # ---------------------------------------------------------------------------- #
 # Parte 2) Regressão logística: nivel_fosfatase_acida EXPLICANDO envolvimento_nodal ----
 

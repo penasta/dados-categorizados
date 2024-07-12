@@ -1,0 +1,170 @@
+---
+title: "Trabalho de Dados Categorizados 1/2024"
+subtitle: "Profa. Maria Tereza Leão Costa"
+author: 
+  - name: Bruno Gondim Toledo (15/0167636)
+  - name: Rafael de Acypreste (20/0060023)
+date: last-modified
+date-format: "DD/MM/YYYY"
+format: 
+  pdf:
+    toc: true  # Enable Table of Contents for PDF
+    toc-title: "Sumário"
+    number-sections: true  # Enable section numbering
+    fig-pos: 'H'
+execute:
+  warning: false
+  echo: false
+crossref:
+  fig-prefix: Figura   # (default is "Figure")
+  tbl-prefix: Tabela 
+  fig-title: Figura
+  tbl-title: Tabela
+editor: source
+editor_options: 
+  chunk_output_type: console
+---
+
+
+```{r}
+#| echo: false
+
+
+carrega_pacotes <- function(){
+  
+  
+library(readxl)
+library(readr)          # Leitura de arquivos
+library(dplyr)
+library(stringr)         # Manipulação de strings
+library(purrr)           # Funções de alto nível (laços for)
+library(janitor)         # Funções de limpeza de dados
+library(kableExtra)
+library(ggplot2)
+library(tidyr)
+library(aTSA)
+library(astsa)          # Funções de séries temporais (SARIMA)
+library(forecast)       # Funções de previsão
+library(latex2exp)      # Expressões matemáticas
+  
+options(scipen = 99)
+  
+}
+
+carrega_pacotes()
+
+
+```
+
+
+
+```{r}
+#| results: hide
+#| output: false
+#| cache: true
+
+
+source("trabalho/trabalho.R")
+```
+
+```{r}
+pacman::p_load(
+ gtsummary,
+ gt,
+  labelled
+)
+
+```
+
+\newpage
+
+# Introdução
+
+Ao se constatar que um paciente desenvolveu câncer, é fundamental, para se decidir qual tratamento utilizar, saber se o câncer já se espalhou para os linfonodos próximos. Um estudo foi realizado com o objetivo de medir a capacidade de predição para o envolvimento nodal em câncer de próstata de várias variáveis pré-operatórias cuja coleta é menos invasiva que uma cirurgia.
+
+• Numa primeira etapa, desejava-se avaliar especificamente o efeito do nível de
+fosfatase ácida na predição para envolvimento nodal; e
+
+• Na segunda etapa do estudo se considerou além desta variável as outras variáveis
+pré-operatórias. 
+
+Com isso, o presente estudo objetiva analisar os dados coletados e verificar a capacidade de predição para o envolvimento nodal em câncer de próstata.
+
+
+
+## Análise exploratória
+
+Os dados avaliados consistem no acompanhamento clínico de 146 pacientes com câncer de próstata. Um resumo das variáveis pode ser visto na @tbl-dados.  
+
+
+```{r dados}
+#| label: tbl-dados
+#| tbl-cap: Resumo dos dados.
+
+var_label(dados) <- list(
+  resultado_radiografia = "Resultado da Radiografia",
+  estagio_tumor         = "Estágio do Tumor",
+  nivel_fosfatase_acida = "Nível da Fosfatase Ácida",
+  envolvimento_nodal    = "Envolvimento Nodal"
+)
+
+
+dados |> 
+  tbl_summary() |> 
+  modify_header(label ~ "**Variável**") |>
+  as_gt() |>
+  as_latex()
+```
+
+
+A variável resposta de interesse é de Envolvimento Nodal. Nesse sentido, a @tbl-envolvimento-nodal apresenta a distribuição das variáveis coletadas por pessoas que apresentaram ou não o envolvimento.
+
+
+```{r}
+#| label: tbl-envolvimento-nodal
+#| tbl-cap: Distribuição das variáveis por envolvimento nodal.
+
+dados |> 
+  tbl_summary(by = envolvimento_nodal) |> 
+  modify_header(label ~ "**Variável**") |>
+  as_gt() |>
+  as_latex()
+
+
+```
+
+O que se pode perceber é que as variáveis relativas ao resultado da tomografia, do estágio do tumor e do nível da Fosfatase ácida são mais elevados entre os pacientes que apresentaram envolvimento nodal. Entretanto, é preciso usar métodos estatísticos adequados para verificar se essas diferenças são significativas.
+
+A relação entre o Envolvimento Nodal e o nível da Fosfatase Ácida pode ser vista na @fig-fosfatase-acida-envolvimento-nodal. Por ela, também é reforçada a ideia de que o nível da Fosfatase Ácida é mais elevado entre os pacientes que apresentaram envolvimento nodal.
+
+```{r}
+#| label: fig-fosfatase-acida-envolvimento-nodal
+#| fig-cap: Relação entre o nível da Fosfatase Ácida e o Envolvimento Nodal.
+#| fig-height: 4
+
+
+  ## Variáveis auxiliares
+theme_blank <- theme_bw() + theme(panel.grid.minor = element_blank(),
+                                  panel.grid.major = element_blank())
+
+dados |>
+  ggplot(aes(x = envolvimento_nodal, y = nivel_fosfatase_acida)) +
+  geom_boxplot(fill = "skyblue") +
+  labs(title = "Relação entre o nível da Fosfatase Ácida
+e o Envolvimento Nodal",
+       x = "Envolvimento Nodal",
+       y = "Nível da Fosfatase Ácida") +
+  theme_blank
+```
+
+
+
+# Metodologia
+
+
+# Resultados
+
+
+
+# Conclusão
+
