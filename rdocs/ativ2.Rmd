@@ -1,0 +1,171 @@
+---
+title: ''
+author: ''
+date: ''
+output:
+  pdf_document: null
+  fig_crop: no
+  html_document:
+    df_print: paged
+subtitle: ''
+highlight: tango
+number_sections: no
+fig_caption: yes
+keep_tex: yes
+includes:
+  in_header: Estilo.sty
+classoption: a4paper
+always_allow_html: yes
+---
+
+\begin{center}
+{\Large
+  DEPARTAMENTO DE ESTATÍSTICA} \\[0.5cm]
+\begin{figure}[!t]
+\centering
+\includegraphics[width=9cm, keepaspectratio]{logo-UnB.eps}
+\end{figure}
+{\large
+  `r format(Sys.time(), '%d %B %Y')`} \\[0.5cm]
+{\LARGE
+  \textbf{Atividade 2}} \\[0.5cm]
+{\Large
+  Prof. Maria Tereza Leão Costa} \\[0.5cm]
+{\Large
+  Aluno: Bruno Gondim Toledo} \\[0.5cm]
+{\Large
+  Matrícula: 15/0167636} \\[0.5cm]
+{\Large
+  Análise de Dados Categorizados} \\[0.5cm]
+{\Large
+  1º/2024} \\[0.5cm]
+\end{center}
+\newpage
+
+```{r setup, include=F}
+source("source/source.R")
+p_load(exact2x2)
+```
+
+```{r}
+options(scipen=999)
+a = 12
+b = 0
+c = 0
+d = 6
+
+(factorial(a+b) * factorial(c+d) * factorial(a+c) * factorial(b+d))/
+(factorial(a) * factorial(b) * factorial(c) * factorial(d) * factorial(a+b+c+d))
+
+```
+
+```{r}
+
+t3 = matrix(c(8,4,4,2),2,2)
+fisher.test(t3, alternative = "greater")
+
+t4 = matrix(c(9,3,3,3),2,2)
+fisher.test(t4, alternative = "greater")
+
+t5 = matrix(c(10,2,2,4),2,2)
+fisher.test(t5, alternative = "greater")
+
+t2 = matrix(c(7,5,5,1),2,2)
+fisher.test(t2, alternative = "greater")
+
+t1 = matrix(c(6,6,6,0),2,2)
+fisher.test(t1, alternative = "greater")
+
+t6 = matrix(c(11,1,1,5),2,2)
+fisher.test(t6, alternative = "greater")
+
+t7 = matrix(c(12,0,0,6),2,2)
+fisher.test(t7, alternative = "greater")
+
+```
+
+```{r}
+t3 = matrix(c(8,4,4,2),2,2)
+chisq.test(t3, correct = F)
+
+t4 = matrix(c(9,3,3,3),2,2)
+chisq.test(t4, correct = F)
+
+t5 = matrix(c(10,2,2,4),2,2)
+chisq.test(t5, correct = F)
+
+t2 = matrix(c(7,5,5,1),2,2)
+chisq.test(t2, correct = F)
+
+t1 = matrix(c(6,6,6,0),2,2)
+chisq.test(t1, correct = F)
+
+t6 = matrix(c(11,1,1,5),2,2)
+chisq.test(t6, correct = F)
+
+t7 = matrix(c(12,0,0,6),2,2)
+chisq.test(t7, correct = F)
+```
+
+```{r}
+
+t3 = matrix(c(8,4,4,2),2,2)
+fisher.exact(t3, midp=T)
+
+
+t4 = matrix(c(9,3,3,3),2,2)
+fisher.exact(t4, midp=T)
+
+
+t5 = matrix(c(10,2,2,4),2,2)
+fisher.exact(t5, midp=T)
+
+
+t2 = matrix(c(7,5,5,1),2,2)
+fisher.exact(t2, midp=T)
+
+
+t1 = matrix(c(6,6,6,0),2,2)
+fisher.exact(t1, midp=T)
+
+
+t6 = matrix(c(11,1,1,5),2,2)
+fisher.exact(t6, midp=T)
+
+
+t7 = matrix(c(12,0,0,6),2,2)
+fisher.exact(t7, midp=T)
+```
+
+
+```{r}
+
+t3 = matrix(c(8,4,4,2),2,2)
+fisher.exact(t3, midp=T, alternative = "greater")
+
+
+t4 = matrix(c(9,3,3,3),2,2)
+fisher.exact(t4, midp=T, alternative = "greater")
+
+
+t5 = matrix(c(10,2,2,4),2,2)
+fisher.exact(t5, midp=T, alternative = "greater")
+
+
+t2 = matrix(c(7,5,5,1),2,2)
+fisher.exact(t2, midp=T, alternative = "greater")
+
+
+t1 = matrix(c(6,6,6,0),2,2)
+fisher.exact(t1, midp=T, alternative = "greater")
+
+
+t6 = matrix(c(11,1,1,5),2,2)
+fisher.exact(t6, midp=T, alternative = "greater")
+
+
+t7 = matrix(c(12,0,0,6),2,2)
+fisher.exact(t7, midp=T, alternative = "greater")
+```
+
+

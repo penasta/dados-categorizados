@@ -1,0 +1,311 @@
+---
+title: ''
+author: ''
+date: ''
+output:
+  pdf_document: null
+  fig_crop: no
+  html_document:
+    df_print: paged
+subtitle: ''
+highlight: tango
+number_sections: no
+fig_caption: yes
+keep_tex: yes
+includes:
+  in_header: Estilo.sty
+classoption: a4paper
+always_allow_html: yes
+---
+  
+  
+\begin{center}
+{\Large
+  DEPARTAMENTO DE ESTATÍSTICA} \\
+\vspace{0.5cm}
+\begin{figure}[!t]
+\centering
+\includegraphics[width=9cm, keepaspectratio]{logo-UnB.eps}
+\end{figure}
+\vskip 1em
+{\large
+  `r format(Sys.time(), '%d %B %Y')`}
+\vskip 3em
+{\LARGE
+  \textbf{Atividade 1}} \\
+\vskip 5em
+{\Large
+  Prof. Maria Tereza Leão Costa} \\
+\vskip 1em
+{\Large
+  Aluno: Bruno Gondim Toledo} \\
+\vskip 1em
+{\Large
+  Matrícula: 15/0167636} \\
+\vskip 1em
+{\Large
+  Análise de Dados Categorizados} \\
+\vskip 1em
+{\Large
+  1º/2024} \\
+\vskip 1em
+\vskip 1em
+\end{center}
+
+\newpage
+
+```{r setup, include=F}
+source("source/source.R")
+pacman::p_load(knitr)
+```
+
+```{r, include=F}
+consumo = factor(c("0","<1","1-2","3-5",">=6"),
+                 levels = c("0","<1","1-2","3-5",">=6"),
+                 ordered = TRUE)
+ausente = c(17066,14464,788,126,37)
+presente = c(48,38,5,1,1)
+df1 = data.frame(consumo, ausente, presente)
+pacman::p_load(tidyverse,epitools)
+
+df = df1 %>%
+  pivot_longer(cols = c(ausente, presente), names_to = "estado", values_to = "n") %>%
+  uncount(weights = n)
+df$estado = factor(df$estado)
+
+outcome <- c('Ausente', 'Presente')
+data <- matrix(c(17066, 48, 14464, 38,788,5,126,1,37,1), nrow=5, ncol=2, byrow=TRUE)
+dimnames(data) <- list('Consumo de Álcool'=consumo, 'Presença de malformação'=outcome)
+```
+
+A partir do conjunto de dados abaixo
+
+```{r, echo=FALSE}
+kable(df1)
+```
+
+Deseja-se testar a hipótese de associação entre consumo de álcool e presença de malformação.
+
+$H_0)$ Não existe associação entre consumo de álcool e presença de malformação.
+
+$H_1)$ c.c.
+
+Nível de significância: $\alpha = 0,05$.
+
+Para tal, podemos utilizar o teste do qui-quadrado de independência. O resultado do teste é:
+
+```{r,echo=FALSE,warning=FALSE}
+chisq.test(data)
+```
+
+Que rejeita a hipótese nula de independência entre as variáveis.
+Entretando, os valores $n_{ij}$ não são todos $\geq 5$, que é um pré-requisito para confiabilidade do teste.
+
+Podemos também calcular a *Odds Ratio* para este conjunto:
+
+```{r,echo=FALSE,warning=FALSE}
+or = oddsratio(data)
+or[['measure']]
+```
+
+Deste, existe um indicativo de maior chance de mal formação congênita para os grupos de maior consumo de álcool.
+
+Para uma análise mais aprofundada, podemos calcular o coeficiente de correlação de Pearson $\rho$ entre o consumo de álcool e a presença de malformação.
+
+Como as variáveis são categorizadas, será necessário associar um *score* para cada categoria de consumo de álcool. Feito isso, poderemos calcular a estatística $(n-1)\rho^2 = M^2 \sim \chi^2_1 \equiv \sqrt{M^2} = M \sim N(0,1)$.
+
+Definida a estatística de teste, e com o mesmo conjunto de hipóteses definidos para a análise de independência, resta testar para diferentes valores de *scores* arbitrários.
+
+\newpage
+
+
+# Scores
+
+## Scores 1,2,3,4 e 5
+
+```{r,echo=FALSE,warning=FALSE}
+
+df_score = df |>
+  mutate(
+    consumo_score = case_when(
+      consumo == "0" ~ 1,
+      consumo == "<1" ~ 2,
+      consumo == "1-2" ~ 3,
+      consumo == "3-5" ~ 4,
+      consumo == ">=6" ~ 5),
+    estado = ifelse(estado == "ausente", 0, 1)) |>
+  select(consumo_score, estado)
+
+r = cor(df_score$consumo_score, df_score$estado, method = "pearson")
+#r
+M2 = (nrow(df_score)-1)*(r^2)
+#M2
+p_value = 1 - pchisq(M2, 1)
+#p_value
+
+```
+
+Valor de $\rho$ = `r r`;
+
+Valor de $M^2$ = `r M2`;
+
+P-valor = `r p_value`.
+
+## Scores 2,4,6,8 e 10
+
+```{r,echo=FALSE,warning=FALSE}
+
+df_score = df |>
+  mutate(
+    consumo_score = case_when(
+      consumo == "0" ~ 2,
+      consumo == "<1" ~ 4,
+      consumo == "1-2" ~ 6,
+      consumo == "3-5" ~ 8,
+      consumo == ">=6" ~ 10),
+    estado = ifelse(estado == "ausente", 0, 1)) |>
+  select(consumo_score, estado)
+
+r = cor(df_score$consumo_score, df_score$estado, method = "pearson")
+#r
+M2 = (nrow(df_score)-1)*(r^2)
+#M2
+p_value = 1 - pchisq(M2, 1)
+#p_value
+
+```
+
+Valor de $\rho$ = `r r`;
+
+Valor de $M^2$ = `r M2`;
+
+P-valor = `r p_value`.
+
+## Scores 10,20,30,40 e 50
+
+```{r,echo=FALSE,warning=FALSE}
+
+df_score = df |>
+  mutate(
+    consumo_score = case_when(
+      consumo == "0" ~ 2,
+      consumo == "<1" ~ 4,
+      consumo == "1-2" ~ 6,
+      consumo == "3-5" ~ 8,
+      consumo == ">=6" ~ 10),
+    estado = ifelse(estado == "ausente", 0, 1)) |>
+  select(consumo_score, estado)
+
+r = cor(df_score$consumo_score, df_score$estado, method = "pearson")
+#r
+M2 = (nrow(df_score)-1)*(r^2)
+#M2
+p_value = 1 - pchisq(M2, 1)
+#p_value
+
+```
+
+Valor de $\rho$ = `r r`;
+
+Valor de $M^2$ = `r M2`;
+
+P-valor = `r p_value`.
+
+Daqui, é possível observar que os três valores são idênticos para os *scores* selecionados, o que indica o postulado de que o valor do *score* não é o que influencia as estatísticas, mas sim a diferença entre eles.
+
+## Scores 1,2,4,7 e 12
+
+```{r,echo=FALSE,warning=FALSE}
+
+df_score = df |>
+  mutate(
+    consumo_score = case_when(
+      consumo == "0" ~ 1,
+      consumo == "<1" ~ 2,
+      consumo == "1-2" ~ 4,
+      consumo == "3-5" ~ 7,
+      consumo == ">=6" ~ 12),
+    estado = ifelse(estado == "ausente", 0, 1)) |>
+  select(consumo_score, estado)
+
+r = cor(df_score$consumo_score, df_score$estado, method = "pearson")
+#r
+M2 = (nrow(df_score)-1)*(r^2)
+#M2
+p_value = 1 - pchisq(M2, 1)
+#p_value
+
+```
+
+Valor de $\rho$ = `r r`;
+
+Valor de $M^2$ = `r M2`;
+
+P-valor = `r p_value`.
+
+Desta, que seria mais próximo aos pontos médios de cada categoria, as estatísticas parecem mais coerentes com a hipótese.
+
+## Scores 5,4,3,2 e 1
+
+```{r,echo=FALSE,warning=FALSE}
+
+df_score = df |>
+  mutate(
+    consumo_score = case_when(
+      consumo == "0" ~ 5,
+      consumo == "<1" ~ 4,
+      consumo == "1-2" ~ 3,
+      consumo == "3-5" ~ 2,
+      consumo == ">=6" ~ 1),
+    estado = ifelse(estado == "ausente", 0, 1)) |>
+  select(consumo_score, estado)
+
+r = cor(df_score$consumo_score, df_score$estado, method = "pearson")
+#r
+M2 = (nrow(df_score)-1)*(r^2)
+#M2
+p_value = 1 - pchisq(M2, 1)
+#p_value
+
+```
+
+Valor de $\rho$ = `r r`;
+
+Valor de $M^2$ = `r M2`;
+
+P-valor = `r p_value`.
+
+Deste, vemos que invertendo a ordem dos scores, tanto a estatística $M^2$ quanto o P-valor são idênticos que os 3 primeiros casos - Apenas o $\rho$ calculado vêm com o sinal invertido, porém o valor absoluto é o mesmo.
+
+## Extra: Exponencial do ponto médio:
+$[0,e^{0,5},e^{1,5},e^{4},e^{7}]$
+
+```{r,echo=FALSE,warning=FALSE}
+
+df_score = df |>
+  mutate(
+    consumo_score = case_when(
+      consumo == "0" ~ 0,
+      consumo == "<1" ~ exp(.5),
+      consumo == "1-2" ~ exp(1.5),
+      consumo == "3-5" ~ exp(4),
+      consumo == ">=6" ~ exp(7)),
+    estado = ifelse(estado == "ausente", 0, 1)) |>
+  select(consumo_score, estado)
+
+r = cor(df_score$consumo_score, df_score$estado, method = "pearson")
+#r
+M2 = (nrow(df_score)-1)*(r^2)
+#M2
+p_value = 1 - pchisq(M2, 1)
+#p_value
+
+```
+
+Valor de $\rho$ = `r r`;
+
+Valor de $M^2$ = `r M2`;
+
+P-valor = `r p_value`.
+
+CONCLUSÃO: A escolha do *score* não influencia a estatística de teste, mas sim a diferença entre eles. A escolha de um *score* mais próximo ao ponto médio da categoria parece ser mais coerente com a hipótese de correlação. Entretanto, como se trata de uma escolha arbitrária, estes testes não podem ser considerados conclusivos.

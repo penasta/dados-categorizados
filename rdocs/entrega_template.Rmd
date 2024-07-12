@@ -17,45 +17,34 @@ includes:
 classoption: a4paper
 always_allow_html: yes
 ---
-  
-  
+
 \begin{center}
 {\Large
-  DEPARTAMENTO DE ESTATÍSTICA} \\
-\vspace{0.5cm}
+  DEPARTAMENTO DE ESTATÍSTICA} \\[0.5cm]
 \begin{figure}[!t]
 \centering
 \includegraphics[width=9cm, keepaspectratio]{logo-UnB.eps}
 \end{figure}
-\vskip 1em
 {\large
-  `r format(Sys.time(), '%d %B %Y')`}
-\vskip 3em
+  `r format(Sys.time(), '%d %B %Y')`} \\[0.5cm]
 {\LARGE
-  \textbf{Lista 1}} \\
-\vskip 5em
+  \textbf{Lista 1}} \\[0.5cm]
 {\Large
-  Prof. Dr. Joãozinho} \\
-\vskip 1em
+  Prof. Maria Tereza Leão Costa} \\[0.5cm]
 {\Large
-  Aluno: Bruno Gondim Toledo} \\
-\vskip 1em
+  Aluno: Bruno Gondim Toledo} \\[0.5cm]
 {\Large
-  Matrícula: 15/0167636} \\
-\vskip 1em
+  Matrícula: 15/0167636} \\[0.5cm]
 {\Large
-  Cálculo 1} \\
-\vskip 1em
+  Análise de Dados Categorizados} \\[0.5cm]
 {\Large
-  1º/2024} \\
-\vskip 1em
-\vskip 1em
+  1º/2024} \\[0.5cm]
 \end{center}
-
 \newpage
 
 ```{r setup, include=F}
 source("source/source.R")
 ```
+
 
 
