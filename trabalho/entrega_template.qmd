@@ -142,7 +142,22 @@ Nodal",
 
 ## Análise de Regressão Logística
 
-Para a resposta às duas perguntas do problema, pode-se utilizar o modelo de regressão logística. Como a variável resposta, Envolvimento Nodal, é uma variável binária, pode-se codificá-la para que assuma o valor 1 se o paciente apresentou envolvimento nodal e 0 caso contrário.
+A regressão logística é uma das técnicas disponíveis na família dos modelos lineares generalizados (MLG). Segundo Casella (2022), um MLG descreve uma relação entre a média de uma variável resposta $Y$ e uma variável independente $x$. No caso do modelo de regressão logística, teremos três componentes, sendo eles: o aleatório, o sistemático e a função de ligação, em que:
+
+- As variáveis resposta $Y_1,...,Y_n$ são o componente aleatório. Elas são consideradas variáveis aleatórias independentes, cada uma com uma distribuição de uma família exponencial específica. Estes vetores não precisam ser identicamente distribuídos, mas cada um deles deve ter uma distribuição da mesma família.
+
+- O componente sistemático é o modelo. Esta é a função da variável preditora $x_i$, linear **nos parâmetros**, que é relacionada à **média** de $Y_i$.
+
+- Por fim, a função de ligação $g(\mu_i)$ estabelece ligação entre os dois componentes, afirmando que $g(\mu_i)=\beta_0 + \beta_i x_i$, em que $\mu_i = \mathbb{E}(Y_i)$
+
+De forma geral, a função de ligação canônica para a regressão logística será a função *logito*, descrita como
+\begin{equation}
+\label{eq-logito}
+log(\frac{\pi_i}{1-\pi_i})= \beta_{i(px1)}X_{i(px1)},
+\end{equation}
+em que $\beta_{i(px1)} = [\beta_{i0},\beta_{i1},...,\beta_{ip-1}]^T$, e $\mathbf{X_{i(px1)}} = [1,X_{i1},X_{i2},...,X_{i \ p-1}]^T$, visto que para este modelo o vetor de respostas $Y_1,...,Y_n$ são independentes e $Y_i \sim Bernoulli(\pi_i), \forall i$.
+
+Para a resposta às duas perguntas do problema, pode-se utilizar o modelo de regressão logística. Como a variável resposta, Envolvimento Nodal, é uma variável binária, pode-se codificá-la para que assuma o valor 1 se o paciente apresentou envolvimento nodal e 0 caso contrário, tal que a resposta esperada será igual a probabilidade $p=\mathbb{E}(Y)$ de um paciente apresentar envolvimento nodal. Segundo Morettin (2023) assim como no caso de modelos de regressão linear, o objetivo da análise é modelar a resposta esperada, que neste caso é uma probabilidade, como função da variável explicativa.
 
 Numa primeira etapa, para se avaliar apenas a capacidade do nível de fosfatase ácida em predizer o envolvimento nodal, pode-se ajustar o modelo de regressão logística com a variável nível de fosfatase ácida como preditora. O modelo utilizado é dado pela equação \eqref{eq-regressao-logistica}.
 \begin{equation}
@@ -152,12 +167,26 @@ Numa primeira etapa, para se avaliar apenas a capacidade do nível de fosfatase 
 
 De maneira específica, o coeficiente $e^{\beta_1}$ indica o quanto a razão de chances de um paciente apresentar envolvimento nodal aumenta para cada unidade de aumento no nível de fosfatase ácida. 
 
-Por mim, o modelo saturado inclui todas as variáveis disponíveis de Estágio do Tumor, Resultado da Radiografia e Nível da Fosfatase Ácida. Nesse caso, o modelo é dado pela equação \eqref{eq-regressao-logistica-saturado}.
+Por mim, o modelo completo inclui todas as variáveis disponíveis de Estágio do Tumor, Resultado da Radiografia e Nível da Fosfatase Ácida. Nesse caso, o modelo é dado pela equação \eqref{eq-regressao-logistica-completo}.
 
 \begin{equation}
-\label{eq-regressao-logistica-saturado}
+\label{eq-regressao-logistica-completo}
 \log\left(\frac{\pi_i}{1-\pi_i}\right) = \beta_0 + \beta_1 X_{1i} + \beta_2 X_{2i} + \beta_3 X_{3i}
 \end{equation} em que $X_{1i}$, $X_{2i}$ e $X_{3i}$ são as variáveis Nível da Fosfatase Ácida, Resultado da Radiografia e Estágio do Tumor, respectivamente.
+
+Na regressão logistica, como não há mais uma conexão direta (por conta da função de ligação) entre $Y_i$ e $\beta_{i(px1)}$ como existe no caso da regressão linear, a opção de ajustar o modelo pelo método de mínimos quadrados não é mais possível. Portanto, o ajuste do modelo dar-se-á pelo método de máxima verossimilhança, que pode ser descrito da seguinte forma:
+
+Se considerarmos o modelo geral $Y_i \sim Bernoulli(\pi_i)$, onde $\pi(x) = F(\alpha + \beta x)$, para seguir a notação de Casella (2022), em que $\alpha$ representa o intercepto do modelo, que na matéria convencionamos chamar de $\beta_0$, tal que $\alpha = \beta_0$. Portanto, se considerarmos que $F_i = F(\alpha + \beta x_i)$, então a função de verossimilhança é:
+\begin{equation}
+\label{eq-verossimilhanca}
+L(\alpha, \beta | y) = \prod_{i=1}^{n} \pi (x_i)^{y_i} (1-\pi (x_i))^{1-y_i} = \prod_{i=1}^{n} F_i^{y_i}(1-F_i)^{1-y_i},
+\end{equation}
+Com Log verossomilhança $\ell(\alpha,\beta|y)$ dada por:
+\begin{equation}
+\label{eq-log-verossimilhanca}
+\ell(\alpha,\beta|y) = \sum_{i=1}^n \{ log(1-F_i) + y_i log(\frac{F_i}{1-F_i}) \}.
+\end{equation}
+Visto que o logarítmo é uma função monótona, a maximização desta verossimilhança pode ser obtida maximizando \eqref{eq-log-verossimilhanca}. Para isso, os estimadores de máxima verossimilhança de $\alpha$ e $\beta$ correspondem à solução das equações de estimação $\sum_{i=1}^n\{ y_i - \frac{exp(\hat{\alpha}+\hat{\beta}x_i)}{1-exp(\hat{\alpha}+\hat{\beta}x_i)} \}=0$ e $\sum_{i=1}^nx_1\{ y_i - \frac{exp(\hat{\alpha}+\hat{\beta}x_i)}{1-exp(\hat{\alpha}+\hat{\beta}x_i)} \}=0$. Conforme Morettin (2023), esse sistema de equações não tem solução explícita, logo deve-se recorrer a métodos iterativos como o método de Newton-Raphson para uma solução numérica, que é o que os algoritmos implementados em ferramentas como SAS e R aplicam para estimar os modelos.
 
 
 # Resultados
@@ -321,13 +350,13 @@ testes1 |>
 Portanto, percebe-se que que nenhum dos 3 testes rejeitaram a hipótese nula a 5%. Isto é, o modelo não é significativamente melhor que o modelo que contém apenas o intercepto.
 
 
-## Modelo Saturado
+## Modelo Completo
 
-As demais informações disponíveis podem auxiliar um melhor ajuste do modelo. Nesse caso, o modelo saturado é ajustado. As estatísticas do modelo saturado estão apresentadas na @tbl-modelo-saturado.
+As demais informações disponíveis podem auxiliar um melhor ajuste do modelo. Nesse caso, o modelo completo é ajustado. As estatísticas do modelo completo estão apresentadas na @tbl-modelo-completo.
 
 ```{r}
-#| label: tbl-modelo-saturado
-#| tbl-cap: Estatísticas do modelo de regressão logística saturado.
+#| label: tbl-modelo-completo
+#| tbl-cap: Estatísticas do modelo de regressão logística completo.
 
 digits <- 4
 
@@ -342,14 +371,14 @@ coef2 |>
                 latex_options     = "HOLD_position")
 ```
 
-O teste de Hosmer-Lemeshow para o modelo saturado é de `r round(hoslem_fit2[["statistic"]], 2)` com um p-valor de `r round(hoslem_fit2[["p.value"]], 5)`. O teste sugere que o modelo saturado ajustado não é adequado para os dados.
+O teste de Hosmer-Lemeshow para o modelo completo é de `r round(hoslem_fit2[["statistic"]], 2)` com um p-valor de `r round(hoslem_fit2[["p.value"]], 5)`. O teste sugere que o modelo completo ajustado não é adequado para os dados.
 
-Pode-se inspecionar as previsões do modelo saturado na @fig-modelo-saturado.
+Pode-se inspecionar as previsões do modelo completo na @fig-modelo-completo.
 
 
 ```{r}
-#| label: fig-modelo-saturado
-#| fig-cap: Modelo de regressão logística saturado. Os pontos foram ligeiramente agitados para facilitar a visualização.
+#| label: fig-modelo-completo
+#| fig-cap: Modelo de regressão logística completo. Os pontos foram ligeiramente agitados para facilitar a visualização.
 #| fig-height: 4.5
 
 plot_model(fit2,
@@ -371,7 +400,7 @@ plot_model(fit2,
   theme_blank +
   theme(legend.position = "bottom") +
   labs(title = "Probabilidades previstas de evolvimento nodal de acordo
-com as variáveis do modelo saturado",
+com as variáveis do modelo completo",
        x     = "Nível de Fosfatase Ácida  (x100)",
        y     = "Envolvimento Nodal",
        color = "Resultado da Radiografia") +
@@ -380,11 +409,11 @@ com as variáveis do modelo saturado",
                      labels = percent_format(accuracy = 1)) # Transform y-axis to percentages
 ```
 
-As estatísticas de qualidade do modelo saturado estão apresentadas na @tbl-medidas-modelo-saturado.
+As estatísticas de qualidade do modelo completo estão apresentadas na @tbl-medidas-modelo-completo.
 
 ```{r}
-#| label: tbl-medidas-modelo-saturado
-#| tbl-cap: Estatísticas de qualidade do modelo de regressão logística saturado.
+#| label: tbl-medidas-modelo-completo
+#| tbl-cap: Estatísticas de qualidade do modelo de regressão logística completo.
 
 medidas2 |>
   kbl(booktabs = TRUE,
@@ -397,11 +426,11 @@ medidas2 |>
 
 ### Comparação dos modelos
 
-A @tbl-comparacao-modelos-saturado apresenta as estatísticas de comparação entre o modelo saturado e o modelo com intercepto. \textcolor{red}{e com a variável "Nível de Fosfatase Ácida" (SE DER)} 
+A @tbl-comparacao-modelos-completo apresenta as estatísticas de comparação entre o modelo completo e o modelo com intercepto. \textcolor{red}{e com a variável "Nível de Fosfatase Ácida" (SE DER)} 
 
 ```{r}
-#| label: tbl-comparacao-modelos-saturado
-#| tbl-cap: Estatísticas de comparação entre os modelos de regressão logística saturado e com intercepto.
+#| label: tbl-comparacao-modelos-completo
+#| tbl-cap: Estatísticas de comparação entre os modelos de regressão logística completo e com intercepto.
 
 
 
@@ -486,5 +515,12 @@ Para esse caso específico, o modelo teve `r round(acertos * 100, 2)`% de acerto
 
 # Conclusão
 
+# Referências
 
+- George Casella, Roger L Berger. Inferência estatística. [tradução Solange Aparecida Visconde]. - São Paulo: Cengage Learning, 2022.
 
+- Morettin, Pedro Alberto. Singer, Julio da Motta. Estatística e ciência de dados. 1ª ed. LTC. Rio de Janeiro, 2023.
+
+- Giolo, Suely Ruiz. Introdução à análise de dados categóricos com aplicações. Blucher. São paulo, 2017.
+
+- Cordeiro, Gauss M.; Demétrio, Clarice G. B.; Moral, Rafael A. Modelos lineares generalizados e aplicações. Blucher. São paulo, 2024.
