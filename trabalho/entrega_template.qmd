@@ -26,36 +26,6 @@ editor_options:
 ---
 
 
-```{r}
-#| echo: false
-
-
-carrega_pacotes <- function(){
-  
-  
-library(readxl)
-library(readr)          # Leitura de arquivos
-library(dplyr)
-library(stringr)         # Manipulação de strings
-library(purrr)           # Funções de alto nível (laços for)
-library(janitor)         # Funções de limpeza de dados
-library(kableExtra)
-library(ggplot2)
-library(tidyr)
-library(aTSA)
-library(astsa)          # Funções de séries temporais (SARIMA)
-library(forecast)       # Funções de previsão
-library(latex2exp)      # Expressões matemáticas
-  
-options(scipen = 99)
-  
-}
-
-carrega_pacotes()
-
-
-```
-
 
 
 ```{r}
@@ -63,15 +33,18 @@ carrega_pacotes()
 #| output: false
 #| cache: true
 
-
 source("trabalho/trabalho.R")
 ```
 
 ```{r}
 pacman::p_load(
- gtsummary,
- gt,
-  labelled
+ gtsummary,   # Gera tabelas organizadas por categoria
+ gt,          # Gera tabelas em formato latex
+  labelled,   # Adiciona labels às variáveis
+  sjPlot,     # Gera gráficos para os modelos de regressão
+  scales,     # Adiciona escalas aos gráficos
+  kableExtra, # Adiciona formatação às tabelas
+  ggplot2     # Gera gráficos
 )
 
 ```
@@ -105,7 +78,7 @@ var_label(dados) <- list(
   resultado_radiografia = "Resultado da Radiografia",
   estagio_tumor         = "Estágio do Tumor",
   nivel_fosfatase_acida = "Nível da Fosfatase Ácida",
-  envolvimento_nodal    = "Envolvimento Nodal"
+  envolvimento_nodal    = "Envolvimento Nodal (x100)"
 )
 
 
@@ -126,7 +99,7 @@ A variável resposta de interesse é de Envolvimento Nodal. Nesse sentido, a @tb
 
 dados |> 
   tbl_summary(by = envolvimento_nodal) |> 
-  modify_header(label ~ "**Variável**") |>
+  modify_header(label ~ "**Envolvimento nodal**") |>
   as_gt() |>
   as_latex()
 
@@ -140,7 +113,7 @@ A relação entre o Envolvimento Nodal e o nível da Fosfatase Ácida pode ser v
 ```{r}
 #| label: fig-fosfatase-acida-envolvimento-nodal
 #| fig-cap: Relação entre o nível da Fosfatase Ácida e o Envolvimento Nodal.
-#| fig-height: 4
+#| fig-height: 3
 
 
   ## Variáveis auxiliares
@@ -150,10 +123,10 @@ theme_blank <- theme_bw() + theme(panel.grid.minor = element_blank(),
 dados |>
   ggplot(aes(x = envolvimento_nodal, y = nivel_fosfatase_acida)) +
   geom_boxplot(fill = "skyblue") +
-  labs(title = "Relação entre o nível da Fosfatase Ácida
-e o Envolvimento Nodal",
+  labs(title = "Relação entre o nível da Fosfatase Ácida e o Envolvimento
+Nodal",
        x = "Envolvimento Nodal",
-       y = "Nível da Fosfatase Ácida") +
+       y = "Nível da Fosfatase Ácida (x100)") +
   theme_blank
 ```
 
@@ -161,10 +134,196 @@ e o Envolvimento Nodal",
 
 # Metodologia
 
+## Análise de Regressão Logística
+
+Para a resposta às duas perguntas do problema, pode-se utilizar o modelo de regressão logística. Como a variável resposta, Envolvimento Nodal, é uma variável binária, pode-se codificá-la para que assuma o valor 1 se o paciente apresentou envolvimento nodal e 0 caso contrário.
+
+Numa primeira etapa, para se avaliar apenas a capacidade do nível de fosfatase ácida em predizer o envolvimento nodal, pode-se ajustar o modelo de regressão logística com a variável nível de fosfatase ácida como preditora. O modelo utilizado é dado pela equação \eqref{eq-regressao-logistica}.
+\begin{equation}
+\label{eq-regressao-logistica}
+\log\left(\frac{\pi_i}{1-\pi_i}\right) = \beta_0 + \beta_1 X_{3i}
+\end{equation} em que $\pi_i$ é a probabilidade de um paciente $i$ apresentar envolvimento nodal, $X_{3i}$ é o nível de fosfatase ácida do paciente $i$ e $\beta_0$ e $\beta_1$ são os coeficientes do modelo. A função de ligação logito é dada por $\log\left(\frac{\pi_i}{1-\pi_i}\right)$, que tem como resposta o modelo linear visto na equação.
+
+De maneira específica, o coeficiente $e^{\beta_1}$ indica o quanto a razão de chances de um paciente apresentar envolvimento nodal aumenta para cada unidade de aumento no nível de fosfatase ácida. 
+
+Por mim, o modelo saturado inclui todas as variáveis disponíveis de Estágio do Tumor, Resultado da Radiografia e Nível da Fosfatase Ácida. Nesse caso, o modelo é dado pela equação \eqref{eq-regressao-logistica-saturado}.
+
+\begin{equation}
+\label{eq-regressao-logistica-saturado}
+\log\left(\frac{\pi_i}{1-\pi_i}\right) = \beta_0 + \beta_1 X_{1i} + \beta_2 X_{2i} + \beta_3 X_{3i}
+\end{equation} em que $X_{1i}$, $X_{2i}$ e $X_{3i}$ são as variáveis Nível da Fosfatase Ácida, Resultado da Radiografia e Estágio do Tumor, respectivamente.
+
 
 # Resultados
+
+## Modelo apenas com intercepto
+
+Como estratégia inicial, pode-se avaliar o modelo com uma média única pra todos os níveis de Fosfatase Ácida. Nesse caso, o modelo é dado pela equação \eqref{eq-regressao-logistica-intercepto}.
+
+\begin{equation}
+\label{eq-regressao-logistica-intercepto}
+\log\left(\frac{\pi_i}{1-\pi_i}\right) = \beta_0
+\end{equation}
+
+O modelo com esse ajuste pode ser avaliado na @fig-modelo-intercepto.
+
+
+```{r}
+#| label: fig-modelo-intercepto
+#| fig-cap: Modelo de regressão logística com intercepto. Os pontos foram ligeiramente agitados para facilitar a visualização.
+#| fig-height: 3
+
+# Calculate the predicted response from the model
+predicted_response <- predict(fit0,
+                              type = "response")
+
+# Create the base plot with jittered points
+df |> 
+ggplot(aes(x = nivel_fosfatase_acida,
+               y = envolvimento_nodal)) +
+  geom_jitter(aes(color = "Data Points"), # Add jittered points
+              height = 0.01,
+              color = "black",
+              alpha = 0.5,
+              shape = 16) +
+  # Add a horizontal line for the model prediction
+  geom_hline(
+    aes(yintercept = predicted_response),
+    linetype = "solid",
+    color = "red",
+    linewidth = 1
+  ) +
+  theme_blank +
+  theme(legend.position = "none")+ 
+  labs(x = "Nível de Fosfatase Ácida  (x100)",
+       y = "Envolvimento Nodal", 
+       title = "Previsões do modelo apenas com intercepto") +
+  scale_y_continuous(labels = percent_format(accuracy = 1)) # Transform y-axis to percentages
+
+
+
+
+```
+
+As estatísticas de avaliação do modelo podem ser vistas na @tbl-modelo-intercepto.
+
+```{r}
+#| label: tbl-modelo-intercepto
+#| tbl-cap: Estatísticas do modelo de regressão logística com intercepto.
+
+digits <- 1
+
+
+medidas0 |>
+  kbl(booktabs = TRUE,
+      escape   = FALSE,
+      digits   = digits) |>
+  kable_styling(bootstrap_options = "striped", latex_options     = "HOLD_position")
+```
+
+
+
+## Modelo acrescido do Nível de Fosfatase Ácida como variável preditora
+
+O modelo para o nível de Fosfatase Ácida como variável preditora é dado pela equação \eqref{eq-regressao-logistica}. As probabilidades previstas estão apresentadas na @fig-modelo-com-fosfatase-acida.
+
+
+```{r}
+#| label: fig-modelo-com-fosfatase-acida
+#| fig-cap: Modelo de regressão logística com o nível de Fosfatase Ácida como variável preditora. Os pontos foram ligeiramente agitados para facilitar a visualização.
+#| fig-height: 3
+
+plot_model(fit1, type  = "pred", terms = "nivel_fosfatase_acida [all]") +
+  geom_jitter(
+    # Add jittered points
+    data = df,
+    aes(x = nivel_fosfatase_acida,
+        y = envolvimento_nodal),
+    height = 0.01,
+    color = "black",
+    alpha = 0.5,
+    shape = 16
+  ) +
+  theme_blank +
+  labs(title = "Probabilidades previstas de evolvimento nodal",
+       x     = "Nível de Fosfatase Ácida  (x100)",
+       y     = "Envolvimento Nodal") +
+  scale_y_continuous(limit = c(0, 1),
+                     breaks = c(0, .25, .5, .75, 1),
+                     labels = percent_format(accuracy = 1)) # Transform y-axis to percentages
+```
+
+
+As estatísticas do modelo quando é acrescido o nível de Fosfatase Ácida como variável preditora estão apresentadas na @tbl-modelo-com-fosfatase-acida.
+
+```{r}
+#| label: tbl-modelo-com-fosfatase-acida
+#| tbl-cap: Estatísticas do modelo de regressão logística com o nível de Fosfatase Ácida como variável preditora.
+
+digits <- 3
+
+coef1 |> 
+  as_tibble() |> 
+  mutate(Variável = rownames(coef1)) |>
+  select(Variável, everything()) |>
+  kbl(booktabs = TRUE,
+      escape   = TRUE,
+      digits   = digits) |>
+  kable_styling(bootstrap_options = "striped",
+                latex_options     = "HOLD_position")
+```
+
+
+O teste de Hosmer-Lemeshow pode ser utilizado para avaliar a qualidade do ajuste. Para o modelo da apresentado na @tbl-modelo-com-fosfatase-acida, a estatística $\chi^2$ do teste de Hosmer-Lemeshow é de `r round(hoslem_fit1[["statistic"]], 2)` com um p-valor de `r round(hoslem_fit1[["p.value"]], 5)`. O teste de Hosmer-Lemeshow sugere que o modelo ajustado não é adequado para os dados.
+
+Por fim, as estatísticas do modelo que inclui a variável "Nível de Fosfatase Ácida" como preditora estão apresentadas na @tbl-medidas-modelo-fosfatase-acida.
+
+```{r}
+#| label: tbl-medidas-modelo-fosfatase-acida
+#| tbl-cap: Estatísticas do modelo de regressão logística com o nível de Fosfatase Ácida como variável preditora.
+#| tbl-pos: H
+
+medidas1 |>
+  kbl(booktabs = TRUE,
+      escape   = FALSE,
+      digits   = digits) |>
+  kable_styling(bootstrap_options = "striped",
+                latex_options     = "HOLD_position")
+```
+
+
+
+### Comparação dos modelos
+
+Uma forma de avaliar o modelo com a variável explicativa "Nível de Fosfatase Ácida" é comparar com o modelo apenas com intercepto. A @tbl-comparacao-modelos apresenta as estatísticas de comparação entre os modelos.
+
+```{r}
+#| label: tbl-comparacao-modelos
+#| tbl-cap: Estatísticas de comparação entre os modelos de regressão logística com a variável "Nível de Fosfatase Ácida" e apenas com intercepto.
+
+testes1 |> 
+  as_tibble() |> 
+  mutate(Teste = rownames(testes1)) |>
+  select(Teste, everything()) |>
+  kbl(booktabs = TRUE,
+      escape   = TRUE,
+      digits   = digits) |>
+  kable_styling(bootstrap_options = "striped",
+                latex_options     = "HOLD_position")
+```
+
+Portanto, percebe-se que que nenhum dos 3 testes rejeitaram a hipótese nula a 5%. Isto é, o modelo não é significativamente melhor que o modelo que contém apenas o intercepto.
+
+
+## Modelo Saturado
+
+As demais informações disponíveis podem auxiliar um melhor ajuste do modelo. Nesse caso, o modelo saturado é ajustado. As estatísticas do modelo saturado estão apresentadas na @tbl-modelo-saturado.
+
+
 
 
 
 # Conclusão
+
+
 

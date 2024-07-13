@@ -1,8 +1,23 @@
 # Pacotes ----
 if (!require("pacman")) install.packages("pacman")
-pacman::p_load(readxl,tidyverse,cowplot,mdscore,AICcmodavg,questionr,mlpack,
-               ResourceSelection,lmtest,car,stats,knitr,pROC,ROCit,
-               compareGroups,performance)
+pacman::p_load(
+  readxl,
+  tidyverse,
+  cowplot,
+  mdscore,
+  AICcmodavg,
+  questionr,
+  mlpack,
+  ResourceSelection,
+  lmtest,
+  car,
+  stats,
+  knitr,
+  pROC,
+  ROCit,
+  compareGroups,
+  performance
+)
 
 # Dados de análise e treino dos modelos ----
 df <- read_excel("arquivos/Amostra_g06_Bruno_Rafael.xlsx")
@@ -68,12 +83,20 @@ fit0 <- glm(envolvimento_nodal ~ 1,
             family=binomial(link=logit),
             data=df)
 
-plot(jitter(envolvimento_nodal,0.01) ~ nivel_fosfatase_acida, xlab="nivel_fosfatase_acida", 
-     ylab="envolvimento_nodal", 
-     data=df, pch=16)
+plot(
+  jitter(envolvimento_nodal, 0.01) ~ nivel_fosfatase_acida,
+  xlab = "nivel_fosfatase_acida",
+  ylab = "envolvimento_nodal",
+  data = df,
+  pch = 16
+)
 
-curve(predict(fit0, data.frame(nivel_fosfatase_acida=x),type="resp"),
-      add=T, col="blue", lwd=2)
+curve(
+  predict(fit0, data.frame(nivel_fosfatase_acida = x), type = "resp"),
+  add = T,
+  col = "blue",
+  lwd = 2
+)
 
 medidas0 <- as.data.frame(cbind(fit0$deviance,fit0$aic, BIC(fit0),
                                 logLik(fit0)[1]))
@@ -94,7 +117,9 @@ curve(predict(fit1, data.frame(nivel_fosfatase_acida=x),type="resp"),
 
 summary(fit1); confint(fit1)
 
-ResourceSelection::hoslem.test(fit1$y,fit1$fitted.values)
+hoslem_fit1 <- ResourceSelection::hoslem.test(fit1$y, fitted(fit1), g = 10)
+
+# DescTools::HosmerLemeshowTest(fitted(fit1), fit1$y)
 # H_0) Valores observados e valores esperados são iguais para diferentes níveis de nivel_fosfatase_acida
 # H_1) c.c.
 # O teste de H-L rejeita a hipótese nula, portanto indica que o modelo não é adequado.
@@ -142,8 +167,8 @@ testes1
 
 coef1 <- summary(fit1)$coefficients
 
-colnames(coef1) <- c("Estimativa","Erro Padrao","Valor Z","Pr(>|z|)")
-rownames(coef1) <- c("Intercepto","nivel_fosfatase_acida")
+colnames(coef1) <- c("Estimativa", "Erro Padrao", "Valor Z", "Pr(>|z|)")
+rownames(coef1) <- c("Intercepto", "Nível de \n fosfatase ácida")
 
 coef1
 
@@ -181,7 +206,9 @@ p + geom_point(na.rm = T) +
 # Parte 3) Adicionando outras variáveis no modelo ----
 
 # Modelo saturado:
-fit2 <- glm(envolvimento_nodal ~ nivel_fosfatase_acida + resultado_radiografia + estagio_tumor, 
+fit2 <- glm(envolvimento_nodal ~ resultado_radiografia + 
+               + estagio_tumor +
+              nivel_fosfatase_acida, 
             family=binomial(link=logit), 
             data=df)
 
@@ -192,6 +219,11 @@ ResourceSelection::hoslem.test(fit2$y,fit2$fitted.values)
 # H_0) Valores observados e valores esperados são iguais para diferentes níveis de nivel_fosfatase_acida e outras variáveis.
 # H_1) c.c.
 # O teste de H-L rejeita a hipótese nula a 5%, portanto indica que o modelo não é adequado.
+
+# Outra opção de teste
+# DescTools::HosmerLemeshowTest(fit = fitted(fit2),
+#                               obs =  df$envolvimento_nodal)
+
 
 # Analisando a influência de cada valor no resultado da regressão logística (análise de resíduos)
 stats::influence.measures(fit2)
@@ -219,9 +251,10 @@ coef2 <- summary(fit2)$coefficients
 
 colnames(coef2) <- c("Estimativa","Erro Padrao","Valor Z","Pr(>|z|)")
 rownames(coef2) <- c("Intercepto",
-                     "Nível de fosfatase ácida",
                      "Resultado da Radiografia",
-                     "Estágio do Tumor")
+                     "Estágio do Tumor",
+                     "Nível de Fosfatase Ácida"
+                     )
 coef2
 
 odds.ratio(fit2)[2,]
@@ -308,10 +341,10 @@ kable(medidas)
 # Pela tabela, devemos optar pelo modelo saturado, pois:
 # 1) tem menor deviance 2) tem menor AIC 3) tem maior BIC 4) tem maior log-verossimilhança.
 
-rm(fit0,fit1,fit3,fit4,fit5,fit6,fit7,
-   medidas0,medidas1,medidas3,medidas4,medidas5,medidas6,medidas7,
-   resultados,resultados2,resultados3,p,predicted.data,vcov1,Modelo,thetahat,
-   WaldTest,LL,new.data,score1,t1,testes1,temp.data,coef1,t2)
+# rm(fit0,fit1,fit3,fit4,fit5,fit6,fit7,
+#    medidas0,medidas1,medidas3,medidas4,medidas5,medidas6,medidas7,
+#    resultados,resultados2,resultados3,p,predicted.data,vcov1,Modelo,thetahat,
+#    WaldTest,LL,new.data,score1,t1,testes1,temp.data,coef1,t2)
 # ---------------------------------------------------------------------------- #
 # Métricas do modelo escolhido ----
 kable(medidas2)
