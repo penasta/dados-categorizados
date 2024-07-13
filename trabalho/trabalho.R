@@ -329,16 +329,19 @@ colnames(medidas7) <- c("Deviance","AIC","BIC","Log Likelihood")
 # ---------------------------------------------------------------------------- #
 # Comparando os modelos
 
-fit = glm(envolvimento_nodal ~ nivel_fosfatase_acida + resultado_radiografia * estagio_tumor, 
-          family=binomial(link=logit), 
-          data=df)
+fit = glm(
+  envolvimento_nodal ~ nivel_fosfatase_acida + resultado_radiografia + estagio_tumor,
+  family = binomial(link = logit),
+  data = df
+)
 
 car::Anova(fit) # A iteração não é significativa.
 stepAIC(fit, direction = c("both")) # Voltamos ao modelo saturado.
 rm(fit)
 
-stepAIC(fit2, direction = c("both"))
+stepwise <- stepAIC(fit2, direction = c("both"))
 # O método stepwise indica ficar com o modelo saturado.
+
 
 
 Modelo = c("X4 ~ 1","X4 ~ X3","X4 ~ X1 + X2 + X3","X4 ~ X1 + X2","X4 ~ X1 + X3","X4 ~ X2 + X3","X4 ~ X2","X4 ~ X1")
@@ -361,6 +364,15 @@ kable(medidas2)
 kable(coef2)
 # Curva ROC do modelo fit2
 ROC <- roc(response = df$envolvimento_nodal, predictor = predict(fit2, type = "response"))
+
+# Create a data frame from the ROC object for plotting
+roc_data <- data.frame(
+  Spec_comp = 1 - ROC$specificities, # False Positive Rate = 1 - Specificity
+  Sensit = ROC$sensitivities      # True Positive Rate = Sensitivity
+)
+
+
+
 plot(ROC, main = "Curva ROC - Modelo completo")
 
 # Alternativo:
@@ -379,6 +391,17 @@ teste = teste %>%
   mutate(env_pred = ifelse(predict > .5,1,0))
 
 # Matriz de confusão:
-kable(table(teste$envolvimento_nodal,teste$env_pred))
+table_confusao <- table(teste$envolvimento_nodal, teste$env_pred)
+kable(table_confusao)
+
+
+acertos <- sum(diag(table_confusao)) / sum(table_confusao)
+
+
+matriz_conf_alternativa <- table(teste$envolvimento_nodal, teste$env_pred) |>
+  as.data.frame() |> 
+  pivot_wider(values_from = Freq,
+              names_from = Var2) |> 
+  rename("Observado\\Predito" = Var1) 
 
 # Para os dados de validação, o modelo teve 54+28/102 = 80,4% de acerto, o que é bastante razoável.

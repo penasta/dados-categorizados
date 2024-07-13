@@ -43,11 +43,13 @@ options(digits = 5)
 ```{r}
 pacman::p_load(
  gtsummary,   # Gera tabelas organizadas por categoria
- gt,          # Gera tabelas em formato latex
+  gt,          # Gera tabelas em formato latex
   labelled,   # Adiciona labels às variáveis
   sjPlot,     # Gera gráficos para os modelos de regressão
   scales,     # Adiciona escalas aos gráficos
   kableExtra, # Adiciona formatação às tabelas
+  dplyr,      # Manipulação de dados
+  tidyr,      # Manipulação de dados
   ggplot2     # Gera gráficos
 )
 
@@ -117,7 +119,7 @@ A relação entre o Envolvimento Nodal e o nível da Fosfatase Ácida pode ser v
 ```{r}
 #| label: fig-fosfatase-acida-envolvimento-nodal
 #| fig-cap: Relação entre o nível da Fosfatase Ácida e o Envolvimento Nodal.
-#| fig-height: 3
+#| fig-width: 3
 
 
   ## Variáveis auxiliares
@@ -348,6 +350,7 @@ Pode-se inspecionar as previsões do modelo saturado na @fig-modelo-saturado.
 ```{r}
 #| label: fig-modelo-saturado
 #| fig-cap: Modelo de regressão logística saturado. Os pontos foram ligeiramente agitados para facilitar a visualização.
+#| fig-height: 4.5
 
 plot_model(fit2,
            type  = "pred",
@@ -367,8 +370,8 @@ plot_model(fit2,
   ) +
   theme_blank +
   theme(legend.position = "bottom") +
-  labs(title = "Probabilidades previstas de evolvimento nodal de acordo com as variáveis
-do modelo saturado",
+  labs(title = "Probabilidades previstas de evolvimento nodal de acordo
+com as variáveis do modelo saturado",
        x     = "Nível de Fosfatase Ácida  (x100)",
        y     = "Envolvimento Nodal",
        color = "Resultado da Radiografia") +
@@ -412,6 +415,74 @@ testes2 |>
                 latex_options     = "HOLD_position")
 ```
 
+
+
+## Demais modelos possíveis
+
+Também é possível avaliar as demais combinações de modelos, cujas estatísticas de qualidade de ajuste estão na @tbl-modelos-possiveis.
+
+```{r}
+#| label: tbl-modelos-possiveis
+#| tbl-cap: Estatísticas de qualidade dos modelos de regressão logística com as variáveis preditoras possíveis.
+
+digits <- 2
+
+medidas |>
+  kbl(booktabs = TRUE,
+      escape   = TRUE,
+      digits   = digits) |>
+  kable_styling(bootstrap_options = "striped",
+                latex_options     = "HOLD_position")
+```
+
+O método *stepwise* pode ser utilizado para selecionar o melhor modelo. Nesse caso, considerando tal método e os dados apresentados de qualidade de ajustes dos modelos, a escolha indicada foi exatamente a do modelo completo.
+
+
+\textcolor{red}{Pode-se comparar o modelo completo com o modelo de segunda melhor *deviance*}
+
+## Análise a partir do modelo escolhido
+
+
+Para avaliar a qualidade do modelo, pode-se utilizar a curva ROC. A @fig-curva-roc apresenta a curva ROC do modelo escolhido.
+
+
+```{r}
+#| label: fig-curva-roc
+#| fig-cap: Curva ROC do modelo de regressão logística escolhido.
+#| fig-height: 4
+#| fig-width: 4
+
+# Plotting the ROC curve with ggplot2
+roc_data |> 
+ggplot(aes(x = Spec_comp,
+           y = Sensit)) +
+  geom_path() + # Draw the ROC curve
+  geom_abline(linetype = "dashed") + # Add a 45 degree line
+  labs(title = "Curva ROC - Modelo completo",
+       x = "1 - Especificidade (Taxa de Falso positivo)",
+       y = "Sensitificade (Taxa de positivo verdadeiro)") +
+  theme_blank
+```
+
+
+## Aplicação do modelo escolhido ao conjunto de teste
+
+O modelo escolhido é aplicado ao conjunto de teste. A @tbl-matriz-confusao apresenta a matriz de confusão do modelo aplicado ao conjunto de teste. O valor de corte definido foi de 0.5.
+
+```{r}
+#| label: tbl-matriz-confusao
+#| tbl-cap: Matriz de confusão do modelo de regressão logística aplicado ao conjunto de teste.
+
+matriz_conf_alternativa |> 
+  kbl(booktabs = TRUE,
+      escape   = TRUE) |>
+  kable_styling(bootstrap_options = "striped",
+                latex_options     = "HOLD_position")
+
+```
+
+
+Para esse caso específico, o modelo teve `r round(acertos * 100, 2)`% de acertos, o que confere um caráter interessante para previsão dos resultados.
 
 # Conclusão
 
