@@ -33,7 +33,11 @@ editor_options:
 #| output: false
 #| cache: true
 
+
 source("trabalho/trabalho.R")
+
+options(digits = 5)
+
 ```
 
 ```{r}
@@ -274,13 +278,13 @@ coef1 |>
 ```
 
 
-O teste de Hosmer-Lemeshow pode ser utilizado para avaliar a qualidade do ajuste. Para o modelo da apresentado na @tbl-modelo-com-fosfatase-acida, a estatística $\chi^2$ do teste de Hosmer-Lemeshow é de `r round(hoslem_fit1[["statistic"]], 2)` com um p-valor de `r round(hoslem_fit1[["p.value"]], 5)`. O teste de Hosmer-Lemeshow sugere que o modelo ajustado não é adequado para os dados.
+O teste de Hosmer-Lemeshow pode ser utilizado para avaliar a qualidade do ajuste. Para o modelo da apresentado na @tbl-modelo-com-fosfatase-acida, a estatística $\chi^2$ do teste de Hosmer-Lemeshow é de `r round(hoslem_fit1[["statistic"]], 2)` com um p-valor de `r round(hoslem_fit1[["p.value"]], 5)`. O teste sugere que o modelo ajustado não é adequado para os dados.
 
 Por fim, as estatísticas do modelo que inclui a variável "Nível de Fosfatase Ácida" como preditora estão apresentadas na @tbl-medidas-modelo-fosfatase-acida.
 
 ```{r}
 #| label: tbl-medidas-modelo-fosfatase-acida
-#| tbl-cap: Estatísticas do modelo de regressão logística com o nível de Fosfatase Ácida como variável preditora.
+#| tbl-cap: Estatísticas de qualidade do modelo de regressão logística com o nível de Fosfatase Ácida como variável preditora.
 #| tbl-pos: H
 
 medidas1 |>
@@ -319,8 +323,94 @@ Portanto, percebe-se que que nenhum dos 3 testes rejeitaram a hipótese nula a 5
 
 As demais informações disponíveis podem auxiliar um melhor ajuste do modelo. Nesse caso, o modelo saturado é ajustado. As estatísticas do modelo saturado estão apresentadas na @tbl-modelo-saturado.
 
+```{r}
+#| label: tbl-modelo-saturado
+#| tbl-cap: Estatísticas do modelo de regressão logística saturado.
+
+digits <- 4
+
+coef2 |> 
+  as_tibble() |> 
+  mutate(Variável = rownames(coef2)) |>
+  select(Variável, everything()) |>
+  kbl(booktabs = TRUE,
+      escape   = TRUE,
+      digits   = digits) |>
+  kable_styling(bootstrap_options = "striped",
+                latex_options     = "HOLD_position")
+```
+
+O teste de Hosmer-Lemeshow para o modelo saturado é de `r round(hoslem_fit2[["statistic"]], 2)` com um p-valor de `r round(hoslem_fit2[["p.value"]], 5)`. O teste sugere que o modelo saturado ajustado não é adequado para os dados.
+
+Pode-se inspecionar as previsões do modelo saturado na @fig-modelo-saturado.
 
 
+```{r}
+#| label: fig-modelo-saturado
+#| fig-cap: Modelo de regressão logística saturado. Os pontos foram ligeiramente agitados para facilitar a visualização.
+
+plot_model(fit2,
+           type  = "pred",
+           terms = c("nivel_fosfatase_acida [all]",
+                     "resultado_radiografia",
+                     "estagio_tumor")) +
+  geom_jitter(
+    # Add jittered points
+    data = mutate(df, group_col = factor(estagio_tumor)), # Coluna da facet devia se chamar group_col
+    aes(x = nivel_fosfatase_acida,
+        y = envolvimento_nodal),
+    height = 0.01,
+    color = "black",
+    size = 1.5,
+    alpha = 0.5,
+    shape = 16
+  ) +
+  theme_blank +
+  theme(legend.position = "bottom") +
+  labs(title = "Probabilidades previstas de evolvimento nodal de acordo com as variáveis
+do modelo saturado",
+       x     = "Nível de Fosfatase Ácida  (x100)",
+       y     = "Envolvimento Nodal",
+       color = "Resultado da Radiografia") +
+  scale_y_continuous(limit = c(0, 1),
+                     breaks = c(0, .25, .5, .75, 1),
+                     labels = percent_format(accuracy = 1)) # Transform y-axis to percentages
+```
+
+As estatísticas de qualidade do modelo saturado estão apresentadas na @tbl-medidas-modelo-saturado.
+
+```{r}
+#| label: tbl-medidas-modelo-saturado
+#| tbl-cap: Estatísticas de qualidade do modelo de regressão logística saturado.
+
+medidas2 |>
+  kbl(booktabs = TRUE,
+      escape   = FALSE,
+      digits   = digits) |>
+  kable_styling(bootstrap_options = "striped",
+                latex_options     = "HOLD_position")
+```
+
+
+### Comparação dos modelos
+
+A @tbl-comparacao-modelos-saturado apresenta as estatísticas de comparação entre o modelo saturado e o modelo com intercepto. \textcolor{red}{e com a variável "Nível de Fosfatase Ácida" (SE DER)} 
+
+```{r}
+#| label: tbl-comparacao-modelos-saturado
+#| tbl-cap: Estatísticas de comparação entre os modelos de regressão logística saturado e com intercepto.
+
+
+
+testes2 |> 
+  as_tibble() |> 
+  mutate(Teste = rownames(testes2)) |>
+  select(Teste, everything()) |>
+  kbl(booktabs = TRUE,
+      escape   = TRUE) |>
+  kable_styling(bootstrap_options = "striped",
+                latex_options     = "HOLD_position")
+```
 
 
 # Conclusão
