@@ -15,6 +15,7 @@ pacman::p_load(
   knitr,
   pROC,
   ROCit,
+  labelled,
   compareGroups,
   performance
 )
@@ -27,6 +28,14 @@ colnames(df) <- c("ID", # Identificação do paciente
                   "nivel_fosfatase_acida", # x100
                   "envolvimento_nodal" # 0 - não | 1 - sim
                   )
+
+
+var_label(df) <- list(
+  resultado_radiografia = "Resultado da Radiografia",
+  estagio_tumor         = "Estágio do Tumor",
+  nivel_fosfatase_acida = "Nível da Fosfatase Ácida",
+  envolvimento_nodal    = "Envolvimento Nodal (x100)"
+)
 
 # Dados de validação do modelo (teste) ----
 teste <- read_excel("arquivos/Amostra_VALIDACAO.xlsx")
@@ -215,7 +224,7 @@ fit2 <- glm(envolvimento_nodal ~ resultado_radiografia +
 summary(fit2); confint(fit2)
 # Com o modelo saturado, todas as variáveis se tornam significativas a 5%, inclusive o nível de fosfatase ácida.
 
-ResourceSelection::hoslem.test(fit2$y,fit2$fitted.values)
+hoslem_fit2 <- ResourceSelection::hoslem.test(fit2$y,fit2$fitted.values)
 # H_0) Valores observados e valores esperados são iguais para diferentes níveis de nivel_fosfatase_acida e outras variáveis.
 # H_1) c.c.
 # O teste de H-L rejeita a hipótese nula a 5%, portanto indica que o modelo não é adequado.
@@ -234,7 +243,7 @@ t2 <- lr.test(fit0,fit2)
 
 # teste score
 score2<-anova(fit0,fit2, test="Rao")
-resultados <- cbind(t2$LR,1,t2$pvalue)
+resultados <- cbind(t2$LR,3,t2$pvalue)
 resultados3 <- cbind(anova(fit0,fit2, test="Rao")[2,4],
                      anova(fit0,fit2, test="Rao")[2,3],
                      anova(fit0,fit2, test="Rao")[2,6])
