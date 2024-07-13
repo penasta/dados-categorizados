@@ -9,10 +9,10 @@ PROC IMPORT DATAFILE=REFFILE
 	GETNAMES=YES;
 RUN;
 
-/* Descodificando os dados e colocando a variável X3 na escala original */
+/* Descodificando os dados*/
 data trabalho.df;
 	set trabalho.df;
-	 X3 = X3*100; 
+/*	 X3 = X3/100;*/
 	Label ID='Nº do prontuário'
       X1='Resultado da radiografia'
       X2='Estágio do tumor'
@@ -30,7 +30,7 @@ RUN;
 
 data trabalho.valid;
 	set trabalho.valid;
-	 X3 = X3*100; 
+/*	 X3 = X3/100;*/
 	Label ID='Nº do prontuário'
       X1='Resultado da radiografia'
       X2='Estágio do tumor'
@@ -197,8 +197,8 @@ proc logistic data=trabalho.df;
 run;
 
 /* O método Stepwise sugere pelo modelo contendo todas as variáveis, além de interação entre X1 e X3 */
-/* Esta interação não é muito significativa, e o modelo sem interação contendo todas as três funcionou muito bem como visto anteriormente */
-/* Portando, ficaremos com o modelo mais parcimonioso, isto é: X4 ~ X1 X2 X3 */
+/* Esta interação não é muito siginificativa, e o modelo sem interação contendo todas as três funcionou muito bem como visto anteriormente */
+/* Portando, ficaremos com o modelo mais parsimonioso, isto é: X4 ~ X1 X2 X3 */
 
 proc logistic data=trabalho.df outest=betas covout;
    	model X4 (event='Sim')= X1 X2 X3 /covb lackfit;
