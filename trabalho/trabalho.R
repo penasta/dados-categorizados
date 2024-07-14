@@ -17,6 +17,7 @@ pacman::p_load(
   ROCit,
   labelled,
   compareGroups,
+  arm,
   performance
 )
 
@@ -45,7 +46,7 @@ colnames(teste) <- c("ID", # Identificação do paciente
                      "nivel_fosfatase_acida", # x100
                      "envolvimento_nodal" # 0 - não | 1 - sim
 )
-# ---------------------------------------------------------------------------- #
+####################################################################
 # Parte 1) - Análise exploratória ----
 
 dados = df %>%
@@ -83,7 +84,7 @@ plot(tabela)
 plot(tabela, bivar=TRUE)
 
 # rm(dados,tabela)
-# ---------------------------------------------------------------------------- #
+####################################################################
 # Parte 2) Regressão logística: nivel_fosfatase_acida EXPLICANDO envolvimento_nodal ----
 
 
@@ -243,7 +244,7 @@ p + geom_point(na.rm = T) +
   geom_line(data=new.data, aes(y=fit)) + 
   labs(x="Nível fosfatase ácida (x100)", y="Probabilidade de envolvimento nodal")
 
-# ---------------------------------------------------------------------------- #
+####################################################################
 # Parte 3) Adicionando outras variáveis no modelo ----
 
 # Modelo saturado:
@@ -331,7 +332,7 @@ medidas2 <- as.data.frame(cbind(fit2$deviance,fit2$aic, BIC(fit2),
 colnames(medidas2) <- c("Deviance","AIC","BIC","Log Likelihood")
 medidas2
 
-# ---------------------------------------------------------------------------- #
+####################################################################
 # Outros modelos possíveis:
 fit3 <- glm(envolvimento_nodal ~ resultado_radiografia + estagio_tumor, 
             family=binomial(link=logit), 
@@ -373,7 +374,7 @@ medidas7 <- as.data.frame(cbind(fit7$deviance,fit7$aic, BIC(fit7),
                                 logLik(fit7)[1]))
 colnames(medidas7) <- c("Deviance","AIC","BIC","Log Likelihood")
 
-# ---------------------------------------------------------------------------- #
+####################################################################
 # Comparando os modelos
 
 fit = glm(
@@ -404,7 +405,7 @@ kable(medidas)
 #    medidas0,medidas1,medidas3,medidas4,medidas5,medidas6,medidas7,
 #    resultados,resultados2,resultados3,p,predicted.data,vcov1,Modelo,thetahat,
 #    WaldTest,LL,new.data,score1,t1,testes1,temp.data,coef1,t2)
-# ---------------------------------------------------------------------------- #
+####################################################################
 # Métricas do modelo escolhido ----
 kable(medidas2)
 
@@ -457,7 +458,6 @@ matriz_conf_alternativa <- table(teste$envolvimento_nodal, teste$env_pred) |>
 plot(residuals(fit2, "pearson"))
 
 # Outra visualização: Binned residual plot
-p_load(arm)
 binnedplot(fitted(fit2), 
            residuals(fit2, type = "response"), 
            nclass = NULL, 
