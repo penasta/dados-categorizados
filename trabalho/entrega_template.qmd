@@ -37,9 +37,7 @@ editor_options:
 
 source("trabalho/trabalho.R")
 
-
 options(digits = 5, OutDec = ",")
-
 ```
 
 ```{r}
@@ -50,6 +48,7 @@ pacman::p_load(
   sjPlot,     # Gera gráficos para os modelos de regressão
   scales,     # Adiciona escalas aos gráficos
   kableExtra, # Adiciona formatação às tabelas
+  arm,        # Gráfico de análise de resíduos
   dplyr,      # Manipulação de dados
   tidyr,      # Manipulação de dados
   questionr,  # Gera tabelas de contingência
@@ -221,7 +220,14 @@ No eixo vertical, desenha-se a sensitividade do modelo, que é a razão de verda
 
 #### Teste de Hosmer-Lemeshow
 
-?
+O teste de Hosmer-Lemeshow é uma forma de avaliar a adequação do modelo de regressão logística aos dados. A tarefa principal consiste em dividir proporções da característica de interesse com as que foram previstas pelo modelo (Artes e Barroso, 2023). De maneira simplificada, deve-se ordernar as amostras pelos dados previstos pelo modelo, dividindo-a em $g$ --- 10 grupos costumam ser a saída mais adotada --- grupos distintos, em ordem crescente de probabilidade. Em seguida, identifica-se a quantidade de observações com a característica em cada um dos grupos $O_k$, $k = 1, 2, ..., g$, e calcula-se a média das probabilidades previstas para cada grupo $\hat\pi_k$. 
+
+A partir disso, determina-se a estatística do teste de Hosmer-Lemeshow, que é dada por:
+
+\begin{equation}
+\label{eq-hosmer-lemeshow}
+HL = \sum_{k=1}^{g}\frac{(O_k - n_k\hat\pi_k)^2}{n_k\hat\pi_k(1-n_k\hat\pi_k)}
+\end{equation} em que $n_k$ é o número de observações no grupo $k$. Sob a hipótese nula de que o modelo se ajusta bem aos dados, a estatística de teste tem distribuição qui-quadrado com $g-2$ graus de liberdade. Com isso, rejeita-se a hipótese de ajuste se $HL > \chi^2_{1-\alpha, g-2}$, em que $\chi^2_{1-\alpha, g-2}$ é o quantil de ordem $1-\alpha$ da distribuição qui-quadrado com $g-2$ graus de liberdade.
 
 Com estas ferramentas, estamos preparados para analisar e selecionar um modelo útil que se ajuste bem aos dados.
 
@@ -468,6 +474,26 @@ medidas2 |>
                 latex_options     = "HOLD_position")
 ```
 
+Também é possível avaliar os resíduos por meio do gráfico de resíduos na @fig-residuos-modelo-completo. Neste tipo de gráfico ("*binned*", em inglês), os resíduos são agrupados em intervalos e a média dos resíduos é plotada contra os valores ajustados, uma vez que os resíduos diretos têm pouca interpretabilidade, uma vez que a variável resposta pode assumir apenas os valores 0 e 1. Nesse sentido, a o polígono azul indica duas vezes o desvio padrão dos resíduos (bandas positiva e negativa). Com isso, espera-se que 95% dos resíduos estejam dentro de tal polígono.
+
+```{r}
+#| label: fig-residuos-modelo-completo
+#| fig-cap: Gráfico de resíduos do modelo de regressão logística completo.
+#| fig-height: 4
+
+binnedplot(fitted(fit2), 
+           residuals(fit2, type = "response"), 
+           nclass = NULL, 
+           xlab = "Valores esperados", 
+           ylab = "Resíduo médio", 
+           main = "Gráfico residual armazenado", 
+           cex.pts = 0.8, 
+           col.pts = 1, 
+           col.int = "blue")
+
+```
+
+
 
 Portanto, pode-se visualizar as estimativas pontuais e seus respectivos intervalos de confiança para a razão de chances conforme a @tbl-estimativas-pontuais-completo. 
 
@@ -495,7 +521,8 @@ fit2_odds |>
 
 ### Comparação dos modelos
 
-A @tbl-comparacao-modelos-completo apresenta as estatísticas de comparação entre o modelo completo e o modelo com intercepto. \textcolor{red}{e com a variável "Nível de Fosfatase Ácida" (SE DER)} 
+A @tbl-comparacao-modelos-completo apresenta as estatísticas de comparação entre o modelo completo e o modelo com intercepto. 
+
 
 ```{r}
 #| label: tbl-comparacao-modelos-completo
@@ -536,7 +563,7 @@ medidas |>
 O método *stepwise* pode ser utilizado para selecionar o melhor modelo. Nesse caso, considerando tal método e os dados apresentados de qualidade de ajustes dos modelos, a escolha indicada foi exatamente a do modelo completo.
 
 
-\textcolor{red}{Pode-se comparar o modelo completo com o modelo de segunda melhor *deviance*}
+
 
 ## Análise a partir do modelo escolhido
 
@@ -563,6 +590,8 @@ ggplot(aes(x = Spec_comp,
 ```
 
 
+
+
 ## Aplicação do modelo escolhido ao conjunto de teste
 
 O modelo escolhido é aplicado ao conjunto de teste. A @tbl-matriz-confusao apresenta a matriz de confusão do modelo aplicado ao conjunto de teste. O valor de corte definido foi de 0.5.
@@ -585,15 +614,22 @@ Para esse caso específico, o modelo teve `r round(acertos * 100, 2)`% de acerto
 # Conclusão
 
 
-Como os dados levantados pela pesquisa conseguem fornecer informações importantes para o diagnóstico do espalhamento do câncer de próstata para os lifonodos, pode-se sugerir a coleta dessas informações para novos pacientes de modo a auxiliar no diagnóstico de maneira mais direta, rápida e menos invasiva. O modelo escolhido apresentou uma taxa de acertos de `r round(acertos * 100, 2)`%, o que confere um caráter interessante para previsão dos resultados e bons indicativos diagnósticos iniciais.
+Como os dados levantados pela pesquisa conseguem fornecer informações importantes para o diagnóstico do espalhamento do câncer de próstata para os lifonodos, pode-se sugerir a coleta dessas informações para novos pacientes de modo a auxiliar no diagnóstico de maneira mais direta, rápida e menos invasiva. O modelo escolhido adota a estrutura de uma regressão logística. Com isso, o modelo estimado apresentou uma taxa de acertos de `r round(acertos * 100, 2)`%, o que confere um caráter interessante para previsão dos resultados e bons indicativos diagnósticos iniciais.
 
-O modelo de regressão logística escolhido foi o modelo completo, que apresentou uma boa qualidade de ajuste. A curva ROC do modelo indica que o modelo é capaz de distinguir entre os grupos de interesse. 
+De mandeira específica, o modelo de regressão logística escolhido foi o modelo completo, que apresentou uma boa qualidade de ajuste, como as métricas apresentadas no trabalho indicaram. A curva ROC também sugere que o modelo é capaz de distinguir entre os grupos de interesse. Além disso, de maneira individual, as três variáveis preditoras apresentaram um bom poder de auxílio na previsão das razões de chance. 
 
-Além disso, de maneira individual, as três variáveis preditoras apresentaram um bom poder de auxílio na previsão das razões de chance. A variável "Nível de Fosfatase Ácida" foi a que apresentou o menor poder, sendo ligeiramente significativa. Ainda assim, como sua escala de variação é considerável, à medida que o nível se eleva, pode-se considerar um aumento na chance de apresentar envolvimento nodal. Já o resultado das variáveis de resultado positivo da radiografia e de estágio grave do tumor apresentam indicações elevadas sobre o aumento da razão de chances de um paciente apresentar envolvimento nodal.
+No que diz respeito aos dados coletados, a variável "Nível de Fosfatase Ácida" foi a que apresentou o menor poder, sendo ligeiramente significativa. Ainda assim, como sua escala de variação é considerável, à medida que o nível se eleva, pode-se considerar um aumento na chance de apresentar envolvimento nodal. Já o resultado das variáveis de resultado positivo da radiografia e de estágio grave do tumor apresentam indicações elevadas sobre o aumento da razão de chances de um paciente apresentar envolvimento nodal.
+
+Por fim, para estudos futuros, seria interessante aumetnar o tamanho da amostra coletada. Issso poderia fornecer mais informações para a análise e, possivelmente, melhorar a qualidade e precisão do modelo. Além disso, a inclusão de novas variáveis preditoras reduziria a chance de efeitos estimados serem influenciados por variáveis omitidas. 
+
+\newpage
+
 
 # Referências
 
 - Agresti, Alan. "An introduction to categorical data analysis.". Third Edition John Wiley & Sons, Inc., 2019.
+
+- ARTES, Rinaldo e BARROSO, Lucia Pereira. Métodos multivariados de análise estatística. . São Paulo: Blucher. . Acesso em: 14 jul. 2024. , 2023.
 
 - Cordeiro, Gauss M.; Demétrio, Clarice G. B.; Moral, Rafael A. Modelos lineares generalizados e aplicações. Blucher. São paulo, 2024.
 
@@ -603,8 +639,15 @@ Além disso, de maneira individual, as três variáveis preditoras apresentaram 
 
 - Morettin, Pedro Alberto. Singer, Julio da Motta. Estatística e ciência de dados. 1ª ed. LTC. Rio de Janeiro, 2023.
 
-# Apêndice
+# Apêndice A - códigos em `R`
 
 A seguir, os principais códigos utilizados neste estudo, além de alguma análises exploratórias adicionais.
 
 \includepdf[pages=-]{trabalho.pdf}
+
+
+# Apêndice B - códigos em `SAS`
+
+Também foram realizadas análises em `SAS`. A seguir, os principais códigos utilizados neste estudo.
+
+\includepdf[pages=-]{saidas_SAS.pdf}
