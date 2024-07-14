@@ -188,6 +188,27 @@ Com Log verossomilhança $\ell(\alpha,\beta|y)$ dada por:
 \end{equation}
 Visto que o logarítmo é uma função monótona, a maximização desta verossimilhança pode ser obtida maximizando \eqref{eq-log-verossimilhanca}. Para isso, os estimadores de máxima verossimilhança de $\alpha$ e $\beta$ correspondem à solução das equações de estimação $\sum_{i=1}^n\{ y_i - \frac{exp(\hat{\alpha}+\hat{\beta}x_i)}{1-exp(\hat{\alpha}+\hat{\beta}x_i)} \}=0$ e $\sum_{i=1}^nx_1\{ y_i - \frac{exp(\hat{\alpha}+\hat{\beta}x_i)}{1-exp(\hat{\alpha}+\hat{\beta}x_i)} \}=0$. Conforme Morettin (2023), esse sistema de equações não tem solução explícita, logo deve-se recorrer a métodos iterativos como o método de Newton-Raphson para uma solução numérica, que é o que os algoritmos implementados em ferramentas como SAS e R aplicam para estimar os modelos.
 
+### Métricas para seleção do modelo logístico
+
+Para testar o ajuste aos dados, podemos aplicar técnicas como o teste da razão de verossimilhanças, o teste de Wald ou o teste score, que são descritos a seguir
+
+- Teste da razão de verossimilhança
+
+Seja $\ell(\hat{\beta}^{(0)})$ o valor do logarítmo da função de verossimilhança do modelo sob $H_0)$, e $\ell(\hat{\beta}^{(1)})$ o valor do logarítmo da função de verossimilhança do modelo sob $H_1)$, então a estatística de teste é dada por $G = -2(\ell(\hat{\beta}^{(0)}) - \ell(\hat{\beta}^{(1)}))$, que segue uma distribuição $\chi^2$ com $p$ graus de liberdade, em que $p$ é o número de parâmetros adicionados ao modelo da hipótese alternativa.
+
+- Teste de Wald
+
+Seja o vetor de parâmetros do modelo ajustado $\hat{\beta}$ assintoticamente normal, tal que $\hat{\beta}\sim N_p(\beta,K^{-1})$, onde $K=\sigma^{-2}X^TX$ é a matriz de informação (Cordeiro, 2024, p. 79). Sob a hipótese nula $H_0)\beta_k=0$, a estatística do teste é dada por $z^*=\frac{\beta_k}{s\{\beta_k\}}\sim N(0,1)$ no caso de um parâmetro, que é a situação onde este teste será aplicado.
+
+- Teste de escore
+
+O teste de escore de Rao é definida por Cordeiro (2024) a partir da função escore como $S_R=U^T_1(\widetilde{\beta})\widetilde{Cov}(\hat{\beta}_1)U_1(\widetilde{\beta})$, sendo $\widetilde{Cov}(\hat{\beta}_1)$ a matriz $Cov(\hat{\beta}_1)$ avaliada nos vetores de parâmetros dos modelos sob $H_0) $ e $H_1)$, e $U_1(\widetilde{\beta})$ o vetor de derivadas parciais da função de verossimilhança em relação aos parâmetros do modelo sob $H_1)$. Essa estatística tem distribuição qui-quadrado, com número de graus de liberdade igual a quantidade de parâmetros adicionais da hipótese alternativa.
+
+Uma das métricas possíveis para avaliação e seleção de modelos é a análise da *deviance* do modelo. Segundo Cordeiro et al. (2024), a análise de desvio (se referenindo à *deviance*) é uma generalização da análise de variância (ANOVA) para os modelos lineares generalizados, visando obter, a partir de uma sequência de modelos encaixados, cada modelo incluindo mais termos do que os anteriores, os efeitos de variáveis explanatórias, os fatores e suas interações. Usa-se o desvio como uma medida de discrepância do modelo e forma-se uma tabela de diferença de desvios, montando assim o que pode ser chamado de tabela ANODEV ("Analisys of Deviance), em analogia à tabela ANOVA. Buscaremos o modelo com menor valor de *deviance* entre os modelos que se ajustam aos dados.
+
+A comparação entre modelos também pode ser feita utilizando o critério de informação de Akaike (AIC). Giolo (2017) define este critério como sendo: AIC = -2(log verossimilhança - número de parâmetros do modelo), em que buscaremos o modelo que minimiza este valor. Podemos utilizar ainda o Critério Bayesiano de Schwarz $SBC_p=-2\ell(b)+pln(n)$, ou o critério Log da verossimilhança: $-2\ell(b)$.
+
+Com estas ferramentas, estamos preparados para analisar e selecionar um modelo útil que se ajuste bem aos dados.
 
 # Resultados
 
