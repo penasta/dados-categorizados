@@ -452,3 +452,35 @@ matriz_conf_alternativa <- table(teste$envolvimento_nodal, teste$env_pred) |>
   rename("Observado\\Predito" = Var1) 
 
 # Para os dados de validação, o modelo teve 54+28/102 = 80,4% de acerto, o que é bastante razoável.
+
+# Análise de resíduos
+plot(residuals(fit2, "pearson"))
+
+# Outra visualização: Binned residual plot
+p_load(arm)
+binnedplot(fitted(fit2), 
+           residuals(fit2, type = "response"), 
+           nclass = NULL, 
+           xlab = "Valores esperados", 
+           ylab = "Resíduo médio", 
+           main = "Gráfico residual armazenado", 
+           cex.pts = 0.8, 
+           col.pts = 1, 
+           col.int = "gray")
+
+#Deveríamos observar 95% das observações sobre o intervalo produzido pelo ASE (linhas cinzas)
+
+# Outra que achei na internet (acho que não faz muito sentido na real)
+y <- rbinom(102, 1, 0.5)
+f1 <- fitted(fit2)
+plot( residuals(fit2, "pearson"), (y-f1)/sqrt(f1*(1-f1)))
+abline(0,1)
+
+# Worm plot (está se popularizando para análise de MLGs)
+p_load(gamlss)
+wp(resid=resid(fit2),  xvar=df$envolvimento_nodal)
+
+# Pelo worm plot, o ajuste do modelo parece muito ruim.
+# Mas isso aparenta ter mais a ver com a técnica (regressão logistica) do que quanto ao modelo
+# específico ajustado.
+
