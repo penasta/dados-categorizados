@@ -12,6 +12,8 @@ format:
     toc-title: "Sumário"
     number-sections: true  # Enable section numbering
     fig-pos: 'H'
+header-includes:
+  - \usepackage{pdfpages}
 execute:
   warning: false
   echo: false
@@ -192,21 +194,34 @@ Visto que o logarítmo é uma função monótona, a maximização desta verossim
 
 Para testar o ajuste aos dados, podemos aplicar técnicas como o teste da razão de verossimilhanças, o teste de Wald ou o teste score, que são descritos a seguir
 
-- Teste da razão de verossimilhança
+#### Teste da razão de verossimilhança
 
 Seja $\ell(\hat{\beta}^{(0)})$ o valor do logarítmo da função de verossimilhança do modelo sob $H_0)$, e $\ell(\hat{\beta}^{(1)})$ o valor do logarítmo da função de verossimilhança do modelo sob $H_1)$, então a estatística de teste é dada por $G = -2(\ell(\hat{\beta}^{(0)}) - \ell(\hat{\beta}^{(1)}))$, que segue uma distribuição $\chi^2$ com $p$ graus de liberdade, em que $p$ é o número de parâmetros adicionados ao modelo da hipótese alternativa.
 
-- Teste de Wald
+#### Teste de Wald
 
 Seja o vetor de parâmetros do modelo ajustado $\hat{\beta}$ assintoticamente normal, tal que $\hat{\beta}\sim N_p(\beta,K^{-1})$, onde $K=\sigma^{-2}X^TX$ é a matriz de informação (Cordeiro, 2024, p. 79). Sob a hipótese nula $H_0)\beta_k=0$, a estatística do teste é dada por $z^*=\frac{\beta_k}{s\{\beta_k\}}\sim N(0,1)$ no caso de um parâmetro, que é a situação onde este teste será aplicado.
 
-- Teste de escore
+#### Teste de escore
 
 O teste de escore de Rao é definida por Cordeiro (2024) a partir da função escore como $S_R=U^T_1(\widetilde{\beta})\widetilde{Cov}(\hat{\beta}_1)U_1(\widetilde{\beta})$, sendo $\widetilde{Cov}(\hat{\beta}_1)$ a matriz $Cov(\hat{\beta}_1)$ avaliada nos vetores de parâmetros dos modelos sob $H_0) $ e $H_1)$, e $U_1(\widetilde{\beta})$ o vetor de derivadas parciais da função de verossimilhança em relação aos parâmetros do modelo sob $H_1)$. Essa estatística tem distribuição qui-quadrado, com número de graus de liberdade igual a quantidade de parâmetros adicionais da hipótese alternativa.
+
+#### Deviance
 
 Uma das métricas possíveis para avaliação e seleção de modelos é a análise da *deviance* do modelo. Segundo Cordeiro et al. (2024), a análise de desvio (se referenindo à *deviance*) é uma generalização da análise de variância (ANOVA) para os modelos lineares generalizados, visando obter, a partir de uma sequência de modelos encaixados, cada modelo incluindo mais termos do que os anteriores, os efeitos de variáveis explanatórias, os fatores e suas interações. Usa-se o desvio como uma medida de discrepância do modelo e forma-se uma tabela de diferença de desvios, montando assim o que pode ser chamado de tabela ANODEV ("Analisys of Deviance), em analogia à tabela ANOVA. Buscaremos o modelo com menor valor de *deviance* entre os modelos que se ajustam aos dados.
 
 A comparação entre modelos também pode ser feita utilizando o critério de informação de Akaike (AIC). Giolo (2017) define este critério como sendo: AIC = -2(log verossimilhança - número de parâmetros do modelo), em que buscaremos o modelo que minimiza este valor. Podemos utilizar ainda o Critério Bayesiano de Schwarz $SBC_p=-2\ell(b)+pln(n)$, ou o critério Log da verossimilhança: $-2\ell(b)$.
+
+#### Curva ROC
+
+A curva ROC (Receiver Operating Characteristic, na sigla em inglês) é uma curva que permite analisar a sensibilidade e especificidade de um modelo para todos as probabilidades de corte ($\pi_0$) para definir se uma observação se adequa ou não à variável resposta. Neste estudo, a curva é apresentada para o modelo completo na @fig-curva-roc. 
+
+No eixo vertical, desenha-se a sensitividade do modelo, que é a razão de verdadeiros positivos (TP), isto é $P(\hat y = 1| y = 1)$. No eixo horizontal, é representado o complementar da especificidade ($1 - P(\hat y = 0| y = 0)$). A curva de bissecção representa o modelo aleatório, que não tem poder preditivo. Quanto mais próximo da curva de bissecção, pior é o modelo. A área sob a curva (AUC) é uma medida de qualidade do modelo. Quanto mais próxima a área está de 1, maior a capacidade preditiva do modelo.
+
+
+#### Teste de Hosmer-Lemeshow
+
+?
 
 Com estas ferramentas, estamos preparados para analisar e selecionar um modelo útil que se ajuste bem aos dados.
 
@@ -587,3 +602,9 @@ Além disso, de maneira individual, as três variáveis preditoras apresentaram 
 - Giolo, Suely Ruiz. Introdução à análise de dados categóricos com aplicações. Blucher. São paulo, 2017.
 
 - Morettin, Pedro Alberto. Singer, Julio da Motta. Estatística e ciência de dados. 1ª ed. LTC. Rio de Janeiro, 2023.
+
+# Apêndice
+
+A seguir, os principais códigos utilizados neste estudo, além de alguma análises exploratórias adicionais.
+
+\includepdf[pages=-]{trabalho.pdf}

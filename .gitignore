@@ -52,3 +52,7 @@ template.Rproj
 /.quarto/
 
 trabalho/entrega_template_files/
+/figure/
+
+trabalho.log
+trabalho.tex
