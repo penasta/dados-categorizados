@@ -107,6 +107,33 @@ curve(
   lwd = 2
 )
 
+
+
+get_confint <- function(fit, variavel, digitos){
+  
+  if(!is.null(dim(confint(fit)))){
+    
+    round(exp(confint(fit)[variavel, ]), digitos) 
+    
+  } else {
+    
+    round(confint(fit), digitos) |> 
+      str_c( collapse = "; ")
+    
+  }
+  
+}
+
+
+fit0_pred <- predict(fit0, type="response", se.fit=TRUE)
+fit0_fit <- fit0_pred$fit[1]
+fit0_se <- fit0_pred$se.fit[1]
+
+  # Intervalo de confiança para a probabilidade 
+Lb_fit0 <- fit0_fit - qnorm(0.975) * fit0_se
+Ub_fit0 <- fit0_fit + qnorm(0.975) * fit0_se
+
+
 medidas0 <- as.data.frame(cbind(fit0$deviance,fit0$aic, BIC(fit0),
                                 logLik(fit0)[1]))
 colnames(medidas0) <- c("Deviance","AIC","BIC","Log Likelihood")
@@ -192,6 +219,11 @@ medidas1 <- as.data.frame(cbind(fit1$deviance,fit1$aic, BIC(fit1),
 colnames(medidas1) <- c("Deviance","AIC","BIC","Log Likelihood")
 medidas1
 
+# Intervalo de confiança para a odds ratio
+fit1_ci <- get_confint(fit      = fit1,
+                       variavel = "nivel_fosfatase_acida",
+                       digitos  = 5)
+
 # Plotando com I.C. 95%
 temp.data <- data.frame(df$nivel_fosfatase_acida)
 colnames(temp.data) = "nivel_fosfatase_acida"
@@ -266,15 +298,30 @@ rownames(coef2) <- c("Intercepto",
                      )
 coef2
 
-odds.ratio(fit2)[2,]
+odds.ratio(fit2)[2,] 
+# A odds ratio mostra que o resultado positivo na radiografia aumenta de 4,246 a 82,785 a chance de haver envolvimento nodal.
+
+
+odds.ratio(fit2)[3,]
+# A odds ratio mostra que o fato do tumor ser mais grave aumenta de 6,654 a 137,73 a chance de haver envolvimento nodal.
+
+
+odds.ratio(fit2)[4,] 
 # A Odds-ratio mostra que para cada 1 (x100) unidades do nível de fosfatase ácida, aumenta em 2,82% a chance de não haver envolvimento nodal.
 # Diferente do modelo simples, o intervalo não contém o valor 1, indicano que é positiva a relação dessas variáveis a >95% de significância
 
-odds.ratio(fit2)[3,]
-# A odds ratio mostra que o resultado positivo na radiografia aumenta de 4,246 a 82,785 a chance de haver envolvimento nodal.
 
-odds.ratio(fit2)[4,]
-# A odds ratio mostra que o fato do tumor ser mais grave aumenta de 6,654 a 137,73 a chance de haver envolvimento nodal.
+fit2_odds <- 
+odds.ratio(fit2) |> 
+  as_tibble() |> 
+  slice(-1) |>
+  mutate(Variável = c("Resultado da Radiografia",
+                      "Estágio do Tumor",
+                      "Nível de Fosfatase Ácida")) |>
+  dplyr::select(Variável, everything()) |> 
+  rename("Estimativa Pontual" = OR, "P-valor" = p) 
+
+
 
 # Essas duas variáveis são extremamente significativas, e contribuem fortemente para a explicação de haver ou não envolvimento nodal.
 

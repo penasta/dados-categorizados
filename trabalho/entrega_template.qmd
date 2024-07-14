@@ -33,10 +33,10 @@ editor_options:
 #| output: false
 #| cache: true
 
-
 source("trabalho/trabalho.R")
 
-options(digits = 5)
+
+options(digits = 5, OutDec = ",")
 
 ```
 
@@ -50,6 +50,7 @@ pacman::p_load(
   kableExtra, # Adiciona formatação às tabelas
   dplyr,      # Manipulação de dados
   tidyr,      # Manipulação de dados
+  questionr,  # Gera tabelas de contingência
   ggplot2     # Gera gráficos
 )
 
@@ -155,7 +156,7 @@ De forma geral, a função de ligação canônica para a regressão logística s
 \label{eq-logito}
 log(\frac{\pi_i}{1-\pi_i})= \beta_{i(px1)}X_{i(px1)},
 \end{equation}
-em que $\beta_{i(px1)} = [\beta_{i0},\beta_{i1},...,\beta_{ip-1}]^T$, e $\mathbf{X_{i(px1)}} = [1,X_{i1},X_{i2},...,X_{i \ p-1}]^T$, visto que para este modelo o vetor de respostas $Y_1,...,Y_n$ são independentes e $Y_i \sim Bernoulli(\pi_i), \forall i$.
+em que $\beta_{i(p\times1)} = [\beta_{i0},\beta_{i1},...,\beta_{ip-1}]^T$, e $\mathbf{X_{i(px1)}} = [1,X_{i1},X_{i2},...,X_{i \ p-1}]^T$, visto que para este modelo o vetor de respostas $Y_1,...,Y_n$ são independentes e $Y_i \sim Bernoulli(\pi_i), \forall i$.
 
 Para a resposta às duas perguntas do problema, pode-se utilizar o modelo de regressão logística. Como a variável resposta, Envolvimento Nodal, é uma variável binária, pode-se codificá-la para que assuma o valor 1 se o paciente apresentou envolvimento nodal e 0 caso contrário, tal que a resposta esperada será igual a probabilidade $p=\mathbb{E}(Y)$ de um paciente apresentar envolvimento nodal. Segundo Morettin (2023) assim como no caso de modelos de regressão linear, o objetivo da análise é modelar a resposta esperada, que neste caso é uma probabilidade, como função da variável explicativa.
 
@@ -168,7 +169,6 @@ Numa primeira etapa, para se avaliar apenas a capacidade do nível de fosfatase 
 De maneira específica, o coeficiente $e^{\beta_1}$ indica o quanto a razão de chances de um paciente apresentar envolvimento nodal aumenta para cada unidade de aumento no nível de fosfatase ácida. 
 
 Por mim, o modelo completo inclui todas as variáveis disponíveis de Estágio do Tumor, Resultado da Radiografia e Nível da Fosfatase Ácida. Nesse caso, o modelo é dado pela equação \eqref{eq-regressao-logistica-completo}.
-
 \begin{equation}
 \label{eq-regressao-logistica-completo}
 \log\left(\frac{\pi_i}{1-\pi_i}\right) = \beta_0 + \beta_1 X_{1i} + \beta_2 X_{2i} + \beta_3 X_{3i}
@@ -257,6 +257,7 @@ medidas0 |>
 ```
 
 
+Como o modelo inclui apenas o intercepto, a estimativa pontual é dada por `r round(fit0_fit, 3)`, que é a proporção de pacientes com envolvimento nodal. O intervalo de confiança de 95% para essa proporção é [`r round(Lb_fit0, 3)`; `r round(Ub_fit0, 3)`]. 
 
 ## Modelo acrescido do Nível de Fosfatase Ácida como variável preditora
 
@@ -309,9 +310,12 @@ coef1 |>
 ```
 
 
+Como o modelo apresenta uma variável não categórica como variável explicativa, a deviance residual não apresenta distribição aproximadamente qui-quadrado. Nesse caso, as maneiras tradicionais de análise dos resíduos (como o gráfico de resíduos de Pearson ou dos resíduos padronizados) não são apropriadas (Angresti, 2019, p. 131). Portanto, uma aproximação para avaliar a qualidade do ajuste é o teste de Hosmer-Lemeshow .
+
+
 O teste de Hosmer-Lemeshow pode ser utilizado para avaliar a qualidade do ajuste. Para o modelo da apresentado na @tbl-modelo-com-fosfatase-acida, a estatística $\chi^2$ do teste de Hosmer-Lemeshow é de `r round(hoslem_fit1[["statistic"]], 2)` com um p-valor de `r round(hoslem_fit1[["p.value"]], 5)`. O teste sugere que o modelo ajustado não é adequado para os dados.
 
-Por fim, as estatísticas do modelo que inclui a variável "Nível de Fosfatase Ácida" como preditora estão apresentadas na @tbl-medidas-modelo-fosfatase-acida.
+As estatísticas do modelo que inclui a variável "Nível de Fosfatase Ácida" como preditora estão apresentadas na @tbl-medidas-modelo-fosfatase-acida.
 
 ```{r}
 #| label: tbl-medidas-modelo-fosfatase-acida
@@ -325,6 +329,9 @@ medidas1 |>
   kable_styling(bootstrap_options = "striped",
                 latex_options     = "HOLD_position")
 ```
+
+
+Por fim, pela @tbl-modelo-com-fosfatase-acida, o valor $e^\beta_1$ fornece o incremento (ou redução) na razão de chances ao se aumentar uma unidade no Nível de Fosfatase Ácida é zero. O intervalo de confiança de 95% para essa proporção é [`r round(fit1_ci[1], 4)`; `r round(fit1_ci[2], 4)`]. Como o intervalo contem o $1$ quando avaliado em 4 casas decimais, não há evidências de que o nível de Fosfatase Ácida influencia o envolvimento nodal ao nível de confiança desejado. 
 
 
 
@@ -371,7 +378,9 @@ coef2 |>
                 latex_options     = "HOLD_position")
 ```
 
-O teste de Hosmer-Lemeshow para o modelo completo é de `r round(hoslem_fit2[["statistic"]], 2)` com um p-valor de `r round(hoslem_fit2[["p.value"]], 5)`. O teste sugere que o modelo completo ajustado não é adequado para os dados.
+Novamente, como há uma variável quantitativa como variável explicativa, o teste de Hosmer-Lemeshow é sugerido pela literatura. Para o modelo completo a estatística do teste é de `r round(hoslem_fit2[["statistic"]], 2)` com um p-valor de `r round(hoslem_fit2[["p.value"]], 5)`. O teste sugere que o modelo completo ajustado não é adequado para os dados.
+
+
 
 Pode-se inspecionar as previsões do modelo completo na @fig-modelo-completo.
 
@@ -422,6 +431,30 @@ medidas2 |>
   kable_styling(bootstrap_options = "striped",
                 latex_options     = "HOLD_position")
 ```
+
+
+Portanto, pode-se visualizar as estimativas pontuais e seus respectivos intervalos de confiança para a razão de chances conforme a @tbl-estimativas-pontuais-completo. 
+
+De acordo com os dados apresentados, a variável de Nível de Fosfatase Ácida se torna ligeiramente significativa para o modelo de regressão logística. A partir do modelo, o aumento em uma unidade no nível de fosfatase ácida aumenta a razão de chances de envolvimento nodal entre (`r round(odds.ratio(fit2)[4,][,2], 3)`; `r round(odds.ratio(fit2)[4,][,3], 3)`) vezes.
+
+Ademais, o resultado positivo na radiografia aumenta a razão de chances de envolvimento nodal entre (`r round(odds.ratio(fit2)[2,][,2], 3)`; `r round(odds.ratio(fit2)[2,][,3], 3)`) vezes. Por fim, o estágio do tumor também aumenta a razão de chances de envolvimento nodal entre (`r round(odds.ratio(fit2)[3,][,2], 3)`; `r round(odds.ratio(fit2)[3,][,3], 3)`) vezes.
+
+```{r}
+#| label: tbl-estimativas-pontuais-completo
+#| tbl-cap: Estimativas pontuais e intervalos de confiança para a razão de chances do modelo completo.
+
+fit2_odds |> 
+  kbl(booktabs = TRUE,
+      escape   = TRUE,
+      digits   = digits) |>
+  kable_styling(bootstrap_options = "striped",
+                latex_options     = "HOLD_position")
+
+
+
+```
+
+
 
 
 ### Comparação dos modelos
@@ -515,12 +548,21 @@ Para esse caso específico, o modelo teve `r round(acertos * 100, 2)`% de acerto
 
 # Conclusão
 
+
+Como os dados levantados pela pesquisa conseguem fornecer informações importantes para o diagnóstico do espalhamento do câncer de próstata para os lifonodos, pode-se sugerir a coleta dessas informações para novos pacientes de modo a auxiliar no diagnóstico de maneira mais direta, rápida e menos invasiva. O modelo escolhido apresentou uma taxa de acertos de `r round(acertos * 100, 2)`%, o que confere um caráter interessante para previsão dos resultados e bons indicativos diagnósticos iniciais.
+
+O modelo de regressão logística escolhido foi o modelo completo, que apresentou uma boa qualidade de ajuste. A curva ROC do modelo indica que o modelo é capaz de distinguir entre os grupos de interesse. 
+
+Além disso, de maneira individual, as três variáveis preditoras apresentaram um bom poder de auxílio na previsão das razões de chance. A variável "Nível de Fosfatase Ácida" foi a que apresentou o menor poder, sendo ligeiramente significativa. Ainda assim, como sua escala de variação é considerável, à medida que o nível se eleva, pode-se considerar um aumento na chance de apresentar envolvimento nodal. Já o resultado das variáveis de resultado positivo da radiografia e de estágio grave do tumor apresentam indicações elevadas sobre o aumento da razão de chances de um paciente apresentar envolvimento nodal.
+
 # Referências
+
+- Agresti, Alan. "An introduction to categorical data analysis.". Third Edition John Wiley & Sons, Inc., 2019.
+
+- Cordeiro, Gauss M.; Demétrio, Clarice G. B.; Moral, Rafael A. Modelos lineares generalizados e aplicações. Blucher. São paulo, 2024.
 
 - George Casella, Roger L Berger. Inferência estatística. [tradução Solange Aparecida Visconde]. - São Paulo: Cengage Learning, 2022.
 
-- Morettin, Pedro Alberto. Singer, Julio da Motta. Estatística e ciência de dados. 1ª ed. LTC. Rio de Janeiro, 2023.
-
 - Giolo, Suely Ruiz. Introdução à análise de dados categóricos com aplicações. Blucher. São paulo, 2017.
 
-- Cordeiro, Gauss M.; Demétrio, Clarice G. B.; Moral, Rafael A. Modelos lineares generalizados e aplicações. Blucher. São paulo, 2024.
+- Morettin, Pedro Alberto. Singer, Julio da Motta. Estatística e ciência de dados. 1ª ed. LTC. Rio de Janeiro, 2023.
