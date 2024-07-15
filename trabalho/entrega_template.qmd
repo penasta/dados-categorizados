@@ -8,6 +8,7 @@ date: last-modified
 date-format: "DD/MM/YYYY"
 format: 
   pdf:
+    latex_engine: xelatex
     toc: true  # Enable Table of Contents for PDF
     toc-title: "Sumário"
     number-sections: true  # Enable section numbering
@@ -75,7 +76,7 @@ Com isso, o presente estudo objetiva analisar os dados coletados e verificar a c
 
 ## Análise exploratória
 
-Os dados avaliados consistem no acompanhamento clínico de 146 pacientes com câncer de próstata. Um resumo das variáveis pode ser visto na @tbl-dados.  
+Os dados avaliados consistem no acompanhamento clínico de 102 pacientes com câncer de próstata. Um resumo das variáveis pode ser visto na @tbl-dados.  
 
 
 ```{r dados}
@@ -97,6 +98,13 @@ dados |>
   as_latex()
 ```
 
+Sobre as variáveis, dispomos no conjunto da amostra 4 colunas de variáveis, sendo elas:
+- X1 (Resultado da radiografia): Variável categórica binária, em que o valor 0 indica resultado negativo e o valor 1 indica resultado positivo.
+- X2 (Estágio do tumor): Variável categórica binária, em que o valor 0 indica que o tumor é menos grave, enquanto 1 indica tumor mais grave.
+- X3 (Nível de fosfatase ácida): Variável quantitativa contínua indicando o nível desta enzima, aqui multiplicada por 100.
+- X4 (Envolvimento nodal): Variável categórica binária, em que o valor 0 significa não haver envolvimento nodal, enquanto o valor 1 indica haver envolvimento nodal.
+
+Existe ainda uma coluna de identificação do paciente, com um valor único por linha, que não será considerada no escopo desta análise.
 
 A variável resposta de interesse é de Envolvimento Nodal. Nesse sentido, a @tbl-envolvimento-nodal apresenta a distribuição das variáveis coletadas por pessoas que apresentaram ou não o envolvimento.
 
@@ -620,7 +628,7 @@ De mandeira específica, o modelo de regressão logística escolhido foi o model
 
 No que diz respeito aos dados coletados, a variável "Nível de Fosfatase Ácida" foi a que apresentou o menor poder, sendo ligeiramente significativa. Ainda assim, como sua escala de variação é considerável, à medida que o nível se eleva, pode-se considerar um aumento na chance de apresentar envolvimento nodal. Já o resultado das variáveis de resultado positivo da radiografia e de estágio grave do tumor apresentam indicações elevadas sobre o aumento da razão de chances de um paciente apresentar envolvimento nodal.
 
-Por fim, para estudos futuros, seria interessante aumetnar o tamanho da amostra coletada. Issso poderia fornecer mais informações para a análise e, possivelmente, melhorar a qualidade e precisão do modelo. Além disso, a inclusão de novas variáveis preditoras reduziria a chance de efeitos estimados serem influenciados por variáveis omitidas. 
+Por fim, para estudos futuros, seria interessante aumetnar o tamanho da amostra coletada. Isso poderia fornecer mais informações para a análise e, possivelmente, melhorar a qualidade e precisão do modelo. Além disso, a inclusão de novas variáveis preditoras reduziria a chance de efeitos estimados serem influenciados por variáveis omitidas. 
 
 \newpage
 
@@ -643,11 +651,269 @@ Por fim, para estudos futuros, seria interessante aumetnar o tamanho da amostra 
 
 A seguir, os principais códigos utilizados neste estudo, além de alguma análises exploratórias adicionais.
 
-\includepdf[pages=-]{trabalho.pdf}
-
+\includepdf[pages=-]{r.pdf}
 
 # Apêndice B - códigos em `SAS`
 
 Também foram realizadas análises em `SAS`. A seguir, os principais códigos utilizados neste estudo.
+
+## Códigos
+
+```{SAS, eval=F, echo=T}
+
+OPTIONS LS=80 PS=60 NODATE;
+/* Importando dados da amostra */
+libname trabalho '/home/u36587463/dados';
+FILENAME REFFILE '/home/u36587463/dados/Amostra_g06_Bruno_Rafael.xlsx';
+
+PROC IMPORT DATAFILE=REFFILE
+	DBMS=XLSX
+	OUT=trabalho.df REPLACE;
+	GETNAMES=YES;
+RUN;
+
+/* Descodificando os dados*/
+data trabalho.df;
+	set trabalho.df;
+/*	 X3 = X3/100;*/
+	Label ID='Nº do prontuário'
+      X1='Resultado da radiografia'
+      X2='Estágio do tumor'
+	  X3='Nível de fosfatase ácida'
+      X4='Envolvimento nodal';
+run;
+
+/* Carregando os dados de validação do modelo */
+FILENAME valid '/home/u36587463/dados/Amostra_VALIDACAO.xlsx';
+PROC IMPORT DATAFILE=valid
+	DBMS=XLSX
+	OUT=trabalho.valid REPLACE;
+	GETNAMES=YES;
+RUN;
+
+data trabalho.valid;
+	set trabalho.valid;
+/*	 X3 = X3/100;*/
+	Label ID='Nº do prontuário'
+      X1='Resultado da radiografia'
+      X2='Estágio do tumor'
+	  X3='Nível de fosfatase ácida'
+      X4='Envolvimento nodal';
+run;
+
+/* Conferindo dados */
+PROC CONTENTS 
+	DATA=trabalho.df;
+RUN;
+
+/* Criando rótulos para os valores das variáveis a que se referem */
+proc format;
+  value x1f 0='negativo'
+  		   1='positivo';
+  value x2f 0='menos grave'
+            1='mais grave';
+  value x4f 1='Sim'
+  			0='Não';              
+run;
+
+/* Análise exploratória */
+proc freq data=trabalho.df;
+	tables X3 X4;
+	format X4 x4f.;
+run;
+
+proc univariate data=trabalho.df plot;
+class X4;
+var X3;
+format X4 x4f.;
+run;
+
+proc means data=trabalho.df;
+   class X4;
+   var X3;
+   format X4 x4f.;
+run;
+
+proc gplot data=trabalho.df;
+	plot X4*X3;
+run;
+
+proc sgplot data=trabalho.df;
+vbox X3/category=X4;
+format X4 x4f.;
+run;
+
+proc tabulate data=trabalho.df;
+   class X4;
+   var X3;
+   table X4, X3*(mean std);
+   format X4 x4f.;
+run;
+
+/* Regressão binária logística: X3 (Nível de fosfatase ácida) explica X4 (Envolvimento nodal) */
+proc logistic data=trabalho.df;
+   	model X4 (event='1')= X3 /covb lackfit;
+run;
+
+/* Regressão binária logística: X1 (Resultado da radiografia),
+								X2 (Estágio do tumor),
+								X3 (Nível de fosfatase ácida) 
+								EXPLICAM
+								X4 (Envolvimento nodal) */
+								
+proc logistic data=trabalho.df;
+   	model X4 (event='Sim')= X1 X2 X3 /covb lackfit;
+   	format X1 x1f. X2 x2f. X4 x4f.;
+run;
+
+/* Outros modelos possíveis */
+
+proc logistic data=trabalho.df;
+   	model X4 (event='Sim')= X1 /covb;
+   	format X1 x1f. X4 x4f.;
+run;
+
+proc logistic data=trabalho.df;
+   	model X4 (event='Sim')= X2 /covb;
+   	format X2 x2f. X4 x4f.;
+run;
+
+proc logistic data=trabalho.df;
+   	model X4 (event='Sim')= X1 X3 /covb lackfit;
+   	format X1 x1f. X4 x4f.;
+run;
+
+proc logistic data=trabalho.df;
+   	model X4 (event='Sim')= X2 X3 /covb lackfit;
+   	format X2 x2f. X4 x4f.;
+run;
+
+proc logistic data=trabalho.df;
+   	model X4 (event='Sim')= X1 X2 /covb lackfit;
+   	format X1 x1f. X2 x2f. X4 x4f.;
+run;
+
+/* Olhando interações */
+proc logistic data=trabalho.df;
+   	model X4 (event='Sim')= X1 X2 X3 X1*X2 X2*X3 X1*X3 X1*X2*X3 /covb lackfit;
+   	format X1 x1f. X2 x2f. X4 x4f.;
+run;
+
+proc logistic data=trabalho.df;
+   	model X4 (event='Sim')= X1 X2 X3 X1*X2 X2*X3 X1*X3 /covb lackfit;
+   	format X1 x1f. X2 x2f. X4 x4f.;
+run;
+
+proc logistic data=trabalho.df;
+   	model X4 (event='Sim')= X1 X2 X3 X1*X2 X2*X3 /covb lackfit;
+   	format X1 x1f. X2 x2f. X4 x4f.;
+run;
+
+proc logistic data=trabalho.df;
+   	model X4 (event='Sim')= X1 X2 X3 X1*X2 X1*X3/covb lackfit;
+   	format X1 x1f. X2 x2f. X4 x4f.;
+run;
+
+proc logistic data=trabalho.df;
+   	model X4 (event='Sim')= X1 X2 X3 X2*X3 X1*X3/covb lackfit;
+   	format X1 x1f. X2 x2f. X4 x4f.;
+run;
+
+proc logistic data=trabalho.df;
+   	model X4 (event='Sim')= X1 X2 X3 X1*X2 X2*X3 X1*X3/covb lackfit;
+   	format X1 x1f. X2 x2f. X4 x4f.;
+run;
+
+/* As interações nunca aparecem significativas quando a variável está presente no modelo.*/
+/* Portanto, não utilizaremos. */
+/* De todos os modelos testados, os que melhor se ajustam aparentam ser: */
+
+/* Regressão binária logística: X1 (Resultado da radiografia),
+								X2 (Estágio do tumor),
+								X3 (Nível de fosfatase ácida) 
+								EXPLICAM
+								X4 (Envolvimento nodal) */
+								
+proc logistic data=trabalho.df;
+   	model X4 (event='Sim')= X1 X2 X3 /covb lackfit;
+   	format X1 x1f. X2 x2f. X4 x4f.;
+run;
+
+/* Regressão binária logística: X1 (Resultado da radiografia),
+								X2 (Estágio do tumor),
+								EXPLICAM
+								X4 (Envolvimento nodal) */
+								
+proc logistic data=trabalho.df;
+   	model X4 (event='Sim')= X1 X2 /covb lackfit;
+   	format X1 x1f. X2 x2f. X4 x4f.;
+run;
+
+/* Utilizando abordagem Stepwise para escolha de modelo */
+proc logistic data=trabalho.df;
+   model X4 (event='Sim')= X1 X2 X3 X1*X2 X2*X3 X1*X3 X1*X2*X3
+                / selection=stepwise
+                  slentry=0.3
+                  slstay=0.35
+                  details
+                  lackfit;
+   format X1 x1f. X2 x2f. X4 x4f.;
+run;
+
+/* O método Stepwise sugere pelo modelo contendo todas as variáveis,
+além de interação entre X1 e X3 */
+/* Esta interação não é muito siginificativa, e o modelo sem interação
+contendo todas as três funcionou muito bem como visto anteriormente */
+/* Portando, ficaremos com o modelo mais parsimonioso, isto é:
+  X4 ~ X1 X2 X3 */
+
+proc logistic data=trabalho.df outest=betas covout;
+   	model X4 (event='Sim')= X1 X2 X3 /covb lackfit;
+   output out=pred p=phat lower=lcl upper=ucl
+          predprob=(individual crossvalidate);
+   ods output Association=Association;
+      	format X1 x1f. X2 x2f. X4 x4f.;
+run;
+
+/* Parâmetros do modelo */
+proc print data=betas;
+run;
+
+/* Previsões do modelo sob os dados, com intervalo de confiança 95% */
+proc print data=pred;
+run;
+
+/* Curva ROC do modelo */
+proc logistic data=trabalho.df plots(only)=roc;
+model X4 (event='Sim')= X1 X2 X3;
+ods output roccurve=ROCdata;
+format X1 x1f. X2 x2f. X4 x4f.;
+run;
+
+/* Testando o modelo nos dados de validação */
+/* Salvando o modelo */
+proc logistic data=trabalho.df outmodel=fit;
+    model X4 (event='Sim')= X1 X2 X3 /covb lackfit;
+    format X1 x1f. X2 x2f. X4 x4f.;
+run;
+
+/* Aplicando modelo sob dados de validação */
+proc logistic inmodel=fit;
+    score data=trabalho.valid out=validacao_resultado;
+run;
+
+/* Verificando resultado */
+proc print data=validacao_resultado;
+run;
+
+/* "Matriz de confusão" */
+proc freq data=validacao_resultado;
+   tables X4*I_X4 / nopercent norow nocol ;
+   format X4 x4f.;
+run;
+          
+```
+
+## Saídas SAS
 
 \includepdf[pages=-]{saidas_SAS.pdf}

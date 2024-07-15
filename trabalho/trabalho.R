@@ -413,10 +413,9 @@ kable(coef2)
 # Curva ROC do modelo fit2
 ROC <- roc(response = df$envolvimento_nodal, predictor = predict(fit2, type = "response"))
 
-# Create a data frame from the ROC object for plotting
 roc_data <- data.frame(
-  Spec_comp = 1 - ROC$specificities, # False Positive Rate = 1 - Specificity
-  Sensit = ROC$sensitivities      # True Positive Rate = Sensitivity
+  Spec_comp = 1 - ROC$specificities,
+  Sensit = ROC$sensitivities
 )
 
 
@@ -470,7 +469,6 @@ binnedplot(fitted(fit2),
 
 #Deveríamos observar 95% das observações sobre o intervalo produzido pelo ASE (linhas cinzas)
 
-# Outra que achei na internet (acho que não faz muito sentido na real)
 y <- rbinom(102, 1, 0.5)
 f1 <- fitted(fit2)
 plot( residuals(fit2, "pearson"), (y-f1)/sqrt(f1*(1-f1)))
