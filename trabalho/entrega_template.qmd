@@ -99,9 +99,13 @@ dados |>
 ```
 
 Sobre as variáveis, dispomos no conjunto da amostra 4 colunas de variáveis, sendo elas:
+
 - X1 (Resultado da radiografia): Variável categórica binária, em que o valor 0 indica resultado negativo e o valor 1 indica resultado positivo.
+
 - X2 (Estágio do tumor): Variável categórica binária, em que o valor 0 indica que o tumor é menos grave, enquanto 1 indica tumor mais grave.
+
 - X3 (Nível de fosfatase ácida): Variável quantitativa contínua indicando o nível desta enzima, aqui multiplicada por 100.
+
 - X4 (Envolvimento nodal): Variável categórica binária, em que o valor 0 significa não haver envolvimento nodal, enquanto o valor 1 indica haver envolvimento nodal.
 
 Existe ainda uma coluna de identificação do paciente, com um valor único por linha, que não será considerada no escopo desta análise.
